@@ -103,45 +103,34 @@
 
     <!-- AI CASE GENERATION ONLY -->
     <div class="card">
-      <div class="row cols2">
-        <div>
-          <label for="disorder">DSM-5 disorder</label>
-          <select id="disorder">
-            <option value="" selected>— Choose —</option>
-            <option>Generalised Anxiety Disorder</option>
-            <option>Social Anxiety Disorder</option>
-            <option>Major Depressive Disorder</option>
-            <option>Panic Disorder</option>
-            <option>Obsessive-Compulsive Disorder</option>
-            <option>Posttraumatic Stress Disorder</option>
-            <option>Specific Phobia</option>
-            <option>ADHD</option>
-          </select>
-          <p class="small">Calls <code>/.netlify/functions/generate-case</code> via POST.</p>
-        </div>
-
-        <div>
-          <label>&nbsp;</label>
-          <button id="generateBtn" style="width:100%;">Generate case</button>
-          <div class="small" id="status"></div>
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <div>
-          <label for="caseText">Generated case vignette</label>
-          <textarea id="caseText" placeholder="Your generated vignette will appear here…" readonly></textarea>
-          <p class="small">After generating, summarise the vignette in Step 1 (1–2 sentences, timeframe + impairment).</p>
-        </div>
-      </div>
-
-      <div class="btnrow">
-        <button class="secondary" id="resetBtn">Reset all steps</button>
-        <button class="secondary" id="saveBtn">Save draft</button>
-        <button class="secondary" id="loadBtn">Load saved</button>
-        <button class="secondary" id="exportBtn">Export as text</button>
-      </div>
+  <div class="row cols2">
+    <div>
+      <label>Generate a new case vignette</label>
+      <p class="small">Calls <code>/.netlify/functions/generate-case</code> via POST.</p>
     </div>
+
+    <div>
+      <label>&nbsp;</label>
+      <button id="generateBtn" style="width:100%;">Generate case</button>
+      <div class="small" id="status"></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:10px;">
+    <div>
+      <label for="caseText">Generated case vignette</label>
+      <textarea id="caseText" placeholder="Your generated vignette will appear here…" readonly></textarea>
+      <p class="small">Now do Step 1, then infer Step 3 yourself (provisional diagnosis).</p>
+    </div>
+  </div>
+
+  <div class="btnrow">
+    <button class="secondary" id="resetBtn">Reset all steps</button>
+    <button class="secondary" id="saveBtn">Save draft</button>
+    <button class="secondary" id="loadBtn">Load saved</button>
+    <button class="secondary" id="exportBtn">Export as text</button>
+  </div>
+</div>
 
     <!-- STEP 1 -->
     <div class="card">
