@@ -10,35 +10,27 @@ const headers = {
 };
 
 export async function handler(event) {
-  // Handle CORS preflight
+  // Preflight (fixes "Failed to fetch" in many cases)
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, headers, body: "" };
   }
 
   if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: "Use POST" }),
-    };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: "Use POST" }) };
   }
 
-  let disorder = "Generalised Anxiety Disorder";
-  try {
-    const body = JSON.parse(event.body || "{}");
-    disorder = body.disorder || disorder;
-  } catch {}
+  const { disorder = "Generalised Anxiety Disorder" } = JSON.parse(event.body || "{}");
 
-  // Keep it simple: return title + vignette (+ optional question)
-  const prompt = `Create a fictional clinical-style vignette consistent with ${disorder}.
-Return JSON with keys: title, vignette, question.
-No markdown.`;
+  const prompt = `
+Create a fictional DSM-5-style vignette consistent with: ${disorder}.
+Return ONLY valid JSON with keys: title, vignette, question.
+No markdown.
+`.trim();
 
   const resp = await client.responses.create({
     model: "gpt-4.1-mini",
     input: prompt,
   });
 
-  const text = resp.output_text || "";
-  return { statusCode: 200, headers, body: text };
+  return { statusCode: 200, headers, body: resp.output_text || "{}" };
 }
