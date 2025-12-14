@@ -1,60 +1,44 @@
 import OpenAI from "openai";
 
-export const handler = async (event) => {
-  try {
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Allow browser testing (GET) or real usage (POST)
-    const params = event.httpMethod === "POST"
-      ? JSON.parse(event.body || "{}")
-      : {
-          domain: "Assessment",
-          difficulty: "Medium",
-          population: "Adult",
-          focus: "Anxiety"
-        };
+const headers = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
 
-    const instructions = `
-You generate fictional psychology case studies for training.
-Do not include real identifying details.
-Return ONLY valid JSON.
-`;
+export async function handler(event) {
+  // Handle CORS preflight
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers, body: "" };
+  }
 
-    const input = `
-Create ONE psychology case study with:
-Domain: ${params.domain}
-Difficulty: ${params.difficulty}
-Population: ${params.population}
-Focus: ${params.focus}
-
-Return JSON with:
-{
-  "title": "...",
-  "vignette": "...",
-  "question": "...",
-  "options": ["A ...", "B ...", "C ...", "D ..."],
-  "correctAnswer": "A|B|C|D",
-  "explanation": "..."
-}
-`;
-
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input,
-      temperature: 0.6
-    });
-
+  if (event.httpMethod !== "POST") {
     return {
-      statusCode: 200,
-      body: response.output_text
-    };
-
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message })
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: "Use POST" }),
     };
   }
-};
+
+  let disorder = "Generalised Anxiety Disorder";
+  try {
+    const body = JSON.parse(event.body || "{}");
+    disorder = body.disorder || disorder;
+  } catch {}
+
+  // Keep it simple: return title + vignette (+ optional question)
+  const prompt = `Create a fictional clinical-style vignette consistent with ${disorder}.
+Return JSON with keys: title, vignette, question.
+No markdown.`;
+
+  const resp = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: prompt,
+  });
+
+  const text = resp.output_text || "";
+  return { statusCode: 200, headers, body: text };
+}
