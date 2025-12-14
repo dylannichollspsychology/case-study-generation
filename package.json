@@ -1,0 +1,8 @@
+{
+  "name": "case-study-generator",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "openai": "^4.0.0"
+  }
+}
