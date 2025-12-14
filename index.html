@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Guided Case-Based Reasoning Trainer</title>
+  <title>NPE Guided Case-Based Reasoning</title>
   <style>
     :root { color-scheme: light; }
     body{
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background:#f6f6f6; color:#111; margin:0; padding:24px 14px;
     }
-    .wrap{ max-width: 920px; margin:0 auto; }
+    .wrap{ max-width: 980px; margin:0 auto; }
     header{ margin-bottom: 14px; }
     h1{ margin:0 0 6px; font-size: 26px; letter-spacing:-0.02em; }
     .sub{ margin:0; color:#444; line-height:1.45; }
@@ -20,8 +20,9 @@
       border-radius:14px; padding:16px; box-shadow:0 1px 10px rgba(0,0,0,.05);
       margin-top:12px;
     }
+
     .row{ display:grid; grid-template-columns: 1fr; gap:12px; }
-    @media (min-width: 860px){
+    @media (min-width: 920px){
       .row.cols2{ grid-template-columns: 1fr 1fr; }
       .row.cols3{ grid-template-columns: 1fr 1fr 1fr; }
     }
@@ -47,7 +48,7 @@
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       margin-bottom: 8px;
     }
-    .stepTitle{ font-size:15px; font-weight:700; margin:0; }
+    .stepTitle{ font-size:15px; font-weight:750; margin:0; }
     .pill{
       font-size:12px; color:#444; background: rgba(0,0,0,.05);
       padding:6px 10px; border-radius: 999px;
@@ -64,12 +65,35 @@
     .ok{ color:#0a7a2f; }
     .warn{ color:#b00020; }
 
-    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px; }
-    .tab{
-      border:1px solid rgba(0,0,0,.18); background:#fff; color:#111;
-      padding:8px 10px; border-radius:999px; cursor:pointer; font-size:13px;
+    .toggleGrid{
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;
     }
-    .tab.active{ border-color:#000; background:#000; color:#fff; }
+    .toggle{
+      border:1px solid rgba(0,0,0,.18);
+      background:#fff; color:#111;
+      border-radius:999px; padding:10px 12px;
+      font-size:14px; cursor:pointer;
+      user-select:none;
+      transition: transform .04s ease;
+    }
+    .toggle:active{ transform: scale(0.98); }
+    .toggle[aria-pressed="true"]{
+      background:#000; color:#fff; border-color:#000;
+    }
+    .toggle.disabled{
+      opacity:.45; cursor:not-allowed;
+    }
+
+    .meta{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top:10px; color:#444; font-size:13px;
+    }
+    .badge{
+      background: rgba(0,0,0,.05);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:999px;
+      padding:6px 10px;
+    }
 
     .scorebox{
       display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 10px;
@@ -79,7 +103,7 @@
       border-radius:12px; padding:10px 12px;
     }
     .score strong{ display:block; font-size:13px; color:#444; }
-    .score span{ font-size:18px; font-weight:800; }
+    .score span{ font-size:18px; font-weight:850; }
 
     footer{ margin-top:16px; color:#777; font-size:12px; line-height:1.4; }
   </style>
@@ -87,9 +111,9 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>Guided Case-Based Reasoning Trainer</h1>
+      <h1>NPE Guided Case-Based Reasoning</h1>
       <p class="sub">
-        Train the NPE-style thinking loop: <strong>Presenting problem → symptoms → assessments → diagnosis → differentials → intervention</strong>.
+        Work through a case like an exam stem: <strong>presenting issue → maintaining factors → diagnosis → differentials → assessments → modality → strategies</strong>.
       </p>
     </header>
 
@@ -100,13 +124,13 @@
           <label for="mode">Mode</label>
           <select id="mode">
             <option value="manual" selected>Manual (paste a case vignette)</option>
-            <option value="ai">AI (call Netlify function to generate a case)</option>
+            <option value="ai">AI (generate a vignette via Netlify function)</option>
           </select>
-          <p class="small">AI mode is optional. Manual mode works immediately.</p>
+          <p class="small">Manual mode works immediately. AI mode calls <code>/.netlify/functions/generate-case</code>.</p>
         </div>
 
         <div>
-          <label for="disorder">DSM-5 Disorder (optional)</label>
+          <label for="disorder">DSM-5 disorder (optional label / for AI generation)</label>
           <select id="disorder">
             <option value="">— Choose (optional) —</option>
             <option>Generalised Anxiety Disorder</option>
@@ -118,14 +142,13 @@
             <option>Specific Phobia</option>
             <option>ADHD</option>
           </select>
-          <p class="small">Used for AI generation (if enabled), or just to label your session.</p>
         </div>
       </div>
 
       <div class="row">
         <div>
           <label for="caseText">Case vignette / presenting problem</label>
-          <textarea id="caseText" placeholder="Paste a case vignette here. Treat the presenting problem as the 'exam question' and work through the steps below."></textarea>
+          <textarea id="caseText" placeholder="Paste a case vignette here, or switch to AI mode and generate one."></textarea>
         </div>
       </div>
 
@@ -135,109 +158,133 @@
         <button class="secondary" id="resetBtn">Reset all steps</button>
         <button class="secondary" id="saveBtn">Save draft</button>
         <button class="secondary" id="loadBtn">Load saved</button>
+        <button class="secondary" id="exportBtn">Export as text</button>
       </div>
 
       <div id="status" class="small"></div>
     </div>
 
-    <!-- GUIDED STEPS -->
+    <!-- STEP 1 -->
     <div class="card">
       <div class="stepHeader">
-        <p class="stepTitle">Step 1 — Extract symptoms from the presenting problem</p>
-        <span class="pill">Focus on key features</span>
+        <p class="stepTitle">Step 1 — Presenting issue</p>
+        <span class="pill">1–2 sentences · timeframe + impairment</span>
       </div>
-      <textarea id="stepSymptoms" placeholder="List key symptoms / clinical features (bullet points). What matters? What’s noise?"></textarea>
-
+      <textarea id="step1" placeholder="Summarise the presenting issue in 1–2 sentences. Include timeframe + level of impairment."></textarea>
       <details>
         <summary>Hint prompts</summary>
         <p class="hint">
-          • What is the main complaint?<br/>
-          • Timeframe (weeks/months)?<br/>
-          • Triggers/context (social, work, health, trauma)?<br/>
-          • Avoidance/safety behaviours?<br/>
-          • Functional impairment?<br/>
-          • Risk flags (self-harm, harm to others, psychosis, intoxication)?<br/>
-          • Medical contributors to rule out?
+          • What is the primary complaint?<br/>
+          • How long has it been going on?<br/>
+          • What domains are impaired (work, social, study, relationships)?<br/>
+          • Any immediate risks or red flags to note (briefly)?
         </p>
       </details>
     </div>
 
+    <!-- STEP 2 -->
     <div class="card">
       <div class="stepHeader">
-        <p class="stepTitle">Step 2 — Match symptoms to assessments</p>
-        <span class="pill">Evidence-based tools</span>
+        <p class="stepTitle">Step 2 — Maintaining factors</p>
+        <span class="pill">mechanisms, not labels</span>
       </div>
-      <textarea id="stepAssess" placeholder="For each symptom cluster, what psychometrics or structured tools would you use? (e.g., PHQ-9, GAD-7, K6/K10, PCL-5, LSAS, ASRS, SCID modules, risk screens, etc.)"></textarea>
-
+      <textarea id="step2" placeholder="What is maintaining the problem? (e.g., avoidance behaviours, reinforcement, rumination, negative thoughts, safety behaviours, sleep disruption, etc.)"></textarea>
       <details>
         <summary>Hint prompts</summary>
         <p class="hint">
-          • What screening tool fits best (quick, validated)?<br/>
-          • What confirms severity / tracks change?<br/>
-          • What differentiates similar diagnoses?<br/>
-          • What is practical in the setting (time, access)?
+          • What does the client do that reduces distress short-term but worsens it long-term?<br/>
+          • What triggers and consequences keep the cycle going?<br/>
+          • Any patterns of avoidance, reassurance seeking, checking, withdrawal?<br/>
+          • Any thinking patterns (catastrophising, threat monitoring, self-criticism)?
         </p>
       </details>
     </div>
 
+    <!-- STEP 3 -->
     <div class="card">
       <div class="stepHeader">
-        <p class="stepTitle">Step 3 — Diagnostic reasoning + provisional diagnosis</p>
-        <span class="pill">Tie back to evidence</span>
+        <p class="stepTitle">Step 3 — Provisional diagnosis</p>
+        <span class="pill">best fit</span>
       </div>
-      <textarea id="stepDx" placeholder="Provisional diagnosis and the reasoning: which features support it? timeframe? impairment?"></textarea>
-
+      <textarea id="step3" placeholder="State the provisional diagnosis and the main reasons it fits (briefly)."></textarea>
       <details>
         <summary>Hint prompts</summary>
         <p class="hint">
-          • Which DSM-5 criteria are met (briefly)?<br/>
-          • Which features are the strongest discriminators?<br/>
-          • What would you need to ask to confirm?
+          • Which features are most diagnostic?<br/>
+          • Timeframe threshold met?<br/>
+          • Impairment present?<br/>
+          • What key question would confirm it?
         </p>
       </details>
     </div>
 
+    <!-- STEP 4 -->
     <div class="card">
       <div class="stepHeader">
-        <p class="stepTitle">Step 4 — Differentials (rule out and justify)</p>
-        <span class="pill">Practice inhibition of distractors</span>
+        <p class="stepTitle">Step 4 — Differential diagnoses</p>
+        <span class="pill">rule out + justify</span>
       </div>
-      <textarea id="stepDiff" placeholder="List likely differentials and explicitly rule them out: why they don’t fit this presentation."></textarea>
-
+      <textarea id="step4" placeholder="List key differential diagnoses and briefly justify why each is less likely / ruled out."></textarea>
       <details>
         <summary>Hint prompts</summary>
         <p class="hint">
-          • What is the “closest competitor” diagnosis?<br/>
-          • What missing criterion rules it out?<br/>
-          • What alternative explanation (substance/medical/adjustment)?<br/>
-          • What comorbidities might coexist?
+          • What is the closest competing diagnosis?<br/>
+          • Which criterion is missing for the differential?<br/>
+          • Any substance/medical/adjustment explanations to consider?
         </p>
       </details>
     </div>
 
+    <!-- STEP 5 -->
     <div class="card">
       <div class="stepHeader">
-        <p class="stepTitle">Step 5 — Intervention planning</p>
-        <span class="pill">Link dx → modality → targets</span>
+        <p class="stepTitle">Step 5 — Assessments</p>
+        <span class="pill">screening + clarification</span>
       </div>
-      <textarea id="stepTx" placeholder="Choose a primary modality (CBT/ACT/DBT/family/etc.) and list 3–6 targets/interventions aligned with the formulation."></textarea>
-
+      <textarea id="step5" placeholder="What assessments would help with screening and diagnostic clarification? (Include 2–5 specific tools if relevant.)"></textarea>
       <details>
         <summary>Hint prompts</summary>
         <p class="hint">
-          • What’s first-line for this problem?<br/>
-          • What are 3 practical interventions you’d start with?<br/>
-          • What would you monitor (outcomes/measures)?<br/>
-          • Any contraindications or safety considerations?
+          • What brief screening fits the presenting problem?<br/>
+          • What tool clarifies diagnosis / severity?<br/>
+          • What baseline measure would you track over time?<br/>
+          • Any risk screen if indicated?
         </p>
       </details>
     </div>
 
-    <!-- QUICK SELF-CHECK -->
+    <!-- STEP 6 -->
+    <div class="card">
+      <div class="stepHeader">
+        <p class="stepTitle">Step 6 — Primary modality</p>
+        <span class="pill">choose ONE</span>
+      </div>
+
+      <div class="toggleGrid" id="modalityGrid" aria-label="Primary modality options"></div>
+      <div class="meta">
+        <span class="badge" id="modalityChosen">Chosen: —</span>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="card">
+      <div class="stepHeader">
+        <p class="stepTitle">Step 7 — Intervention strategies</p>
+        <span class="pill">choose 1–4</span>
+      </div>
+
+      <div class="toggleGrid" id="strategyGrid" aria-label="Intervention strategy options"></div>
+      <div class="meta">
+        <span class="badge" id="strategyCount">Selected: 0 / 4</span>
+        <span class="small">Suggestion: choose <strong>1–4</strong> strategies that logically follow from your chosen modality.</span>
+      </div>
+    </div>
+
+    <!-- Self-check + progress -->
     <div class="card">
       <div class="stepHeader">
         <p class="stepTitle">Quick self-check</p>
-        <span class="pill">Speed + clarity</span>
+        <span class="pill">speed + clarity</span>
       </div>
 
       <div class="row cols3">
@@ -250,13 +297,9 @@
           <input id="confidence" type="number" min="0" max="10" step="1" placeholder="e.g. 7" />
         </div>
         <div>
-          <label for="clarity">Clarity of reasoning (0–10)</label>
+          <label for="clarity">Clarity (0–10)</label>
           <input id="clarity" type="number" min="0" max="10" step="1" placeholder="e.g. 8" />
         </div>
-      </div>
-
-      <div class="btnrow">
-        <button class="secondary" id="exportBtn">Export as text</button>
       </div>
 
       <div class="scorebox" aria-live="polite">
@@ -266,32 +309,52 @@
     </div>
 
     <footer>
-      Educational use only. Always follow AHPRA/NPE guidance and your course materials. This tool is a reasoning practice scaffold, not clinical advice.
+      Educational use only. This scaffold supports clinical reasoning practice for the NPE; it is not clinical advice.
     </footer>
   </div>
 
   <script>
-    // ---------- Helpers ----------
-    const $ = (id) => document.getElementById(id);
-    const LS_KEY = "case_reasoning_trainer_v1";
+    // ---------- Config ----------
+    const LS_KEY = "npe_case_reasoning_v2";
 
-    const fields = [
-      "caseText","disorder","mode",
-      "stepSymptoms","stepAssess","stepDx","stepDiff","stepTx",
-      "timeTaken","confidence","clarity"
+    const modalities = [
+      "Cognitive Behavioural Therapy",
+      "Interpersonal Therapy",
+      "Family Therapy",
+      "Psychodynamic Therapy",
+      "Narrative Therapy",
+      "Solution-Focused Therapy",
+      "Motivational Interviewing"
     ];
 
-    function getState() {
-      const s = {};
-      for (const f of fields) s[f] = $(f).value ?? "";
-      return s;
-    }
+    const strategies = [
+      "Psychoeducation",
+      "Interpersonal therapy techniques",
+      "Psychodynamic therapy techniques",
+      "Solution-focused techniques",
+      "Narrative therapy techniques",
+      "Behaviour modification",
+      "Gradual exposure",
+      "Exposure response prevention",
+      "Interoceptive exposure",
+      "Prolonged exposure",
+      "Cognitive restructuring",
+      "Acceptance strategies",
+      "Self-management",
+      "Relapse prevention",
+      "Progressive muscle relaxation",
+      "Breathing retraining",
+      "Problem solving skills training",
+      "Anger management",
+      "Social skills training",
+      "Assertiveness skills training",
+      "Stress management",
+      "Mindfulness skills",
+      "Parenting skills"
+    ];
 
-    function setState(s) {
-      for (const f of fields) if (f in s) $(f).value = s[f] ?? "";
-      updateCompletion();
-      setSavedFlag(false);
-    }
+    // ---------- Helpers ----------
+    const $ = (id) => document.getElementById(id);
 
     function setStatus(msg, kind="") {
       const el = $("status");
@@ -299,33 +362,198 @@
       el.className = "small " + (kind || "");
     }
 
-    function updateCompletion() {
-      const stepIds = ["stepSymptoms","stepAssess","stepDx","stepDiff","stepTx"];
-      const filled = stepIds.filter(id => ($(id).value || "").trim().length > 0).length;
-      const pct = Math.round((filled / stepIds.length) * 100);
-      $("completionPct").textContent = pct + "%";
-    }
-
     function setSavedFlag(saved) {
       $("savedFlag").textContent = saved ? "Yes" : "No";
       $("savedFlag").className = saved ? "ok" : "";
     }
 
-    // ---------- Button actions ----------
-    $("resetBtn").addEventListener("click", () => {
-      if (!confirm("Reset all steps and clear the case text?")) return;
-      setState({
-        caseText: "",
-        stepSymptoms: "",
-        stepAssess: "",
-        stepDx: "",
-        stepDiff: "",
-        stepTx: "",
-        timeTaken: "",
-        confidence: "",
-        clarity: ""
+    function updateCompletion() {
+      // Steps 1–5 are text; step 6 is single selection; step 7 requires at least 1 strategy
+      const textSteps = ["step1","step2","step3","step4","step5"];
+      const filledText = textSteps.filter(id => (($(id).value||"").trim().length > 0)).length;
+
+      const modalityDone = selectedModality ? 1 : 0;
+      const strategyDone = selectedStrategies.length > 0 ? 1 : 0;
+
+      const total = textSteps.length + 2; // + modality + strategies
+      const done = filledText + modalityDone + strategyDone;
+      const pct = Math.round((done / total) * 100);
+
+      $("completionPct").textContent = pct + "%";
+    }
+
+    function getState() {
+      return {
+        mode: $("mode").value,
+        disorder: $("disorder").value,
+        caseText: $("caseText").value,
+        step1: $("step1").value,
+        step2: $("step2").value,
+        step3: $("step3").value,
+        step4: $("step4").value,
+        step5: $("step5").value,
+        selectedModality,
+        selectedStrategies,
+        timeTaken: $("timeTaken").value,
+        confidence: $("confidence").value,
+        clarity: $("clarity").value
+      };
+    }
+
+    function setState(s) {
+      $("mode").value = s.mode || "manual";
+      $("disorder").value = s.disorder || "";
+      $("caseText").value = s.caseText || "";
+
+      $("step1").value = s.step1 || "";
+      $("step2").value = s.step2 || "";
+      $("step3").value = s.step3 || "";
+      $("step4").value = s.step4 || "";
+      $("step5").value = s.step5 || "";
+
+      $("timeTaken").value = s.timeTaken || "";
+      $("confidence").value = s.confidence || "";
+      $("clarity").value = s.clarity || "";
+
+      // selections
+      selectedModality = s.selectedModality || "";
+      selectedStrategies = Array.isArray(s.selectedStrategies) ? s.selectedStrategies.slice(0,4) : [];
+
+      renderModalityButtons();
+      renderStrategyButtons();
+
+      updateCompletion();
+      setSavedFlag(true);
+      setStatus("Loaded saved draft.", "ok");
+    }
+
+    function exportText() {
+      const s = getState();
+      const stratLine = (s.selectedStrategies && s.selectedStrategies.length)
+        ? s.selectedStrategies.map(x => `- ${x}`).join("\n")
+        : "(none selected)";
+
+      return `NPE CASE-BASED REASONING EXPORT
+
+DSM-5 Disorder label: ${s.disorder || "(not set)"}
+
+CASE VIGNETTE
+${s.caseText || "(empty)"}
+
+STEP 1 — PRESENTING ISSUE (timeframe + impairment)
+${s.step1 || ""}
+
+STEP 2 — MAINTAINING FACTORS
+${s.step2 || ""}
+
+STEP 3 — PROVISIONAL DIAGNOSIS
+${s.step3 || ""}
+
+STEP 4 — DIFFERENTIAL DIAGNOSES
+${s.step4 || ""}
+
+STEP 5 — ASSESSMENTS (screening + clarification)
+${s.step5 || ""}
+
+STEP 6 — PRIMARY MODALITY (ONE)
+${s.selectedModality || "(none selected)"}
+
+STEP 7 — INTERVENTION STRATEGIES (1–4)
+${stratLine}
+
+SELF-CHECK
+Time (min): ${s.timeTaken || ""}
+Confidence (0–10): ${s.confidence || ""}
+Clarity (0–10): ${s.clarity || ""}
+`;
+    }
+
+    // ---------- Step 6 (single select) ----------
+    let selectedModality = "";
+
+    function renderModalityButtons() {
+      const grid = $("modalityGrid");
+      grid.innerHTML = "";
+
+      modalities.forEach(name => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "toggle";
+        btn.textContent = name;
+        btn.setAttribute("aria-pressed", selectedModality === name ? "true" : "false");
+
+        btn.addEventListener("click", () => {
+          selectedModality = (selectedModality === name) ? "" : name; // allow deselect if clicked again
+          renderModalityButtons();
+          updateCompletion();
+          setSavedFlag(false);
+        });
+
+        grid.appendChild(btn);
       });
-      setStatus("Reset complete.");
+
+      $("modalityChosen").textContent = "Chosen: " + (selectedModality || "—");
+    }
+
+    // ---------- Step 7 (multi select, max 4) ----------
+    let selectedStrategies = [];
+
+    function renderStrategyButtons() {
+      const grid = $("strategyGrid");
+      grid.innerHTML = "";
+
+      const atMax = selectedStrategies.length >= 4;
+
+      strategies.forEach(name => {
+        const isOn = selectedStrategies.includes(name);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "toggle";
+        btn.textContent = name;
+        btn.setAttribute("aria-pressed", isOn ? "true" : "false");
+
+        if (!isOn && atMax) {
+          btn.classList.add("disabled");
+          btn.disabled = true;
+        }
+
+        btn.addEventListener("click", () => {
+          const idx = selectedStrategies.indexOf(name);
+          if (idx >= 0) {
+            selectedStrategies.splice(idx, 1);
+          } else {
+            if (selectedStrategies.length >= 4) return;
+            selectedStrategies.push(name);
+          }
+          renderStrategyButtons();
+          updateCompletion();
+          setSavedFlag(false);
+        });
+
+        grid.appendChild(btn);
+      });
+
+      $("strategyCount").textContent = `Selected: ${selectedStrategies.length} / 4`;
+    }
+
+    // ---------- Buttons ----------
+    $("resetBtn").addEventListener("click", () => {
+      if (!confirm("Reset all steps, selections, and clear the case text?")) return;
+
+      $("caseText").value = "";
+      ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
+      $("timeTaken").value = "";
+      $("confidence").value = "";
+      $("clarity").value = "";
+
+      selectedModality = "";
+      selectedStrategies = [];
+      renderModalityButtons();
+      renderStrategyButtons();
+
+      updateCompletion();
+      setSavedFlag(false);
+      setStatus("Reset complete.", "ok");
     });
 
     $("saveBtn").addEventListener("click", () => {
@@ -337,73 +565,46 @@
     $("loadBtn").addEventListener("click", () => {
       const raw = localStorage.getItem(LS_KEY);
       if (!raw) { setStatus("No saved draft found.", "warn"); return; }
-      try {
-        const s = JSON.parse(raw);
-        setState(s);
-        setSavedFlag(true);
-        setStatus("Loaded saved draft.", "ok");
-      } catch {
-        setStatus("Could not load saved draft (corrupt data).", "warn");
-      }
+      try { setState(JSON.parse(raw)); }
+      catch { setStatus("Could not load saved draft (corrupt data).", "warn"); }
     });
 
     $("exportBtn").addEventListener("click", async () => {
-      const s = getState();
-      const out =
-`CASE REASONING EXPORT
-Disorder label: ${s.disorder || "(not set)"}
-
-CASE VIGNETTE
-${s.caseText}
-
-STEP 1 — SYMPTOMS
-${s.stepSymptoms}
-
-STEP 2 — ASSESSMENTS
-${s.stepAssess}
-
-STEP 3 — DIAGNOSIS
-${s.stepDx}
-
-STEP 4 — DIFFERENTIALS
-${s.stepDiff}
-
-STEP 5 — INTERVENTION
-${s.stepTx}
-
-SELF-CHECK
-Time (min): ${s.timeTaken || ""}
-Confidence (0–10): ${s.confidence || ""}
-Clarity (0–10): ${s.clarity || ""}
-`;
+      const out = exportText();
       await navigator.clipboard.writeText(out);
       setStatus("Export copied to clipboard.", "ok");
     });
 
     $("loadExampleBtn").addEventListener("click", () => {
-      setState({
-        disorder: "Social Anxiety Disorder",
-        caseText:
-`A 27-year-old accountant reports intense anxiety during staff meetings and presentations. She experiences racing heart, trembling, and shortness of breath. She fears she will say something “stupid” and be judged. She worries for days beforehand and avoids situations where she might be the centre of attention. She notes growing low mood due to avoidance and reduced social contact. Symptoms have been present for five months and are impacting work performance.`,
-      });
-      setStatus("Example case loaded. Work through the steps below.");
+      $("disorder").value = "Social Anxiety Disorder";
+      $("caseText").value =
+`A 27-year-old accountant reports intense anxiety during staff meetings and presentations. She experiences racing heart, trembling, and shortness of breath. She fears she will say something “stupid” and be judged. She worries for days beforehand and avoids situations where she might be the centre of attention. She has begun turning down opportunities at work and has reduced social contact. Symptoms have been present for five months and are interfering with occupational functioning.`;
+
+      ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
+      selectedModality = "";
+      selectedStrategies = [];
+      renderModalityButtons();
+      renderStrategyButtons();
+
+      updateCompletion();
+      setSavedFlag(false);
+      setStatus("Example case loaded. Start with Step 1.", "ok");
     });
 
     // ---------- AI generation (optional) ----------
     $("generateBtn").addEventListener("click", async () => {
       const mode = $("mode").value;
 
-      // Manual mode: no API call—just a nudge
       if (mode === "manual") {
         if (!($("caseText").value || "").trim()) {
           setStatus("Paste a case vignette first (or click “Load example case”).", "warn");
         } else {
-          setStatus("Great — now start Step 1: extract symptoms.", "ok");
+          setStatus("Great — start Step 1: summarise the presenting issue.", "ok");
         }
         return;
       }
 
-      // AI mode: call your Netlify function
+      // AI mode
       const disorder = $("disorder").value || "Generalised Anxiety Disorder";
       $("generateBtn").disabled = true;
       setStatus("Generating case via Netlify function…");
@@ -430,23 +631,23 @@ Clarity (0–10): ${s.clarity || ""}
           return;
         }
 
-        // Minimal expected keys
-        const vignette = data.vignette || data.case || "";
         const title = data.title || `Case: ${disorder}`;
+        const vignette = data.vignette || "";
 
         $("caseText").value = `${title}\n\n${vignette}`.trim();
-        // clear reasoning steps for a fresh run
-        $("stepSymptoms").value = "";
-        $("stepAssess").value = "";
-        $("stepDx").value = "";
-        $("stepDiff").value = "";
-        $("stepTx").value = "";
+
+        // fresh run: clear steps + selections
+        ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
+        selectedModality = "";
+        selectedStrategies = [];
+        renderModalityButtons();
+        renderStrategyButtons();
 
         updateCompletion();
         setSavedFlag(false);
-        setStatus("Case generated. Start Step 1: extract symptoms.", "ok");
+        setStatus("Case generated. Start Step 1.", "ok");
       } catch (e) {
-        setStatus("Failed to reach the function. Make sure you’re on the Netlify URL.", "warn");
+        setStatus("Failed to reach the function. Make sure you’re on the Netlify site URL.", "warn");
         alert(e?.message || String(e));
       } finally {
         $("generateBtn").disabled = false;
@@ -454,12 +655,22 @@ Clarity (0–10): ${s.clarity || ""}
     });
 
     // ---------- Live completion tracking ----------
-    ["stepSymptoms","stepAssess","stepDx","stepDiff","stepTx"].forEach(id => {
-      $(id).addEventListener("input", updateCompletion);
+    ["step1","step2","step3","step4","step5"].forEach(id => {
+      $(id).addEventListener("input", () => {
+        updateCompletion();
+        setSavedFlag(false);
+      });
+    });
+    ["timeTaken","confidence","clarity","caseText","disorder","mode"].forEach(id => {
+      $(id).addEventListener("input", () => setSavedFlag(false));
+      $(id).addEventListener("change", () => setSavedFlag(false));
     });
 
-    // Initial
+    // Init
+    renderModalityButtons();
+    renderStrategyButtons();
     updateCompletion();
+    setSavedFlag(false);
   </script>
 </body>
 </html>
