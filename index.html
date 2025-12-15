@@ -106,6 +106,9 @@
       border-radius:999px;
       padding:6px 10px;
     }
+    .stepPage { display: none; }
+.stepPage.active { display: block; }
+
 
     footer{ margin-top:16px; color:#777; font-size:12px; line-height:1.4; }
     code{ "Helvetica Neue", Helvetica, Arial, sans-serif; }
@@ -156,9 +159,16 @@
         <button class="secondary" id="exportBtn">Export as text</button>
       </div>
     </div>
+    <div class="meta" style="justify-content:space-between;">
+  <span class="badge" id="stepIndicator">Step 1 / 7</span>
+  <div class="btnrow" style="margin:0;">
+    <button type="button" class="secondary" id="prevStepBtn">Back</button>
+    <button type="button" id="nextStepBtn">Next step</button>
+  </div>
+</div>
 
     <!-- STEP 1 -->
-    <div class="card">
+<div class="card stepPage" data-step="1"> ... Step 1 content ... </div>
       <div class="stepHeader">
         <p class="stepTitle">Step 1 — Presenting issue</p>
         <span class="pill">1–2 sentences · timeframe + impairment</span>
@@ -168,7 +178,8 @@
     </div>
 
     <!-- STEP 2 -->
-    <div class="card">
+    <div class="card stepPage" data-step="2"> ... Step 2 content ... </div>
+  <div class="card">
       <div class="stepHeader">
         <p class="stepTitle">Step 2 — Maintaining factors</p>
         <span class="pill">mechanisms, not labels</span>
@@ -177,7 +188,8 @@
     </div>
     
 <!-- STEP 3 -->
-<div class="card">
+<div class="card stepPage" data-step="3"> ... Step 3 content ... </div>
+  <div class="card">
   <div class="stepHeader">
     <p class="stepTitle">Step 3 — Provisional diagnosis</p>
     <span class="pill">choose ONE · best fit</span>
@@ -255,7 +267,8 @@
 
 
     <!-- STEP 4 -->
-<div class="card">
+<div class="card stepPage" data-step="4"> ... Step 4 content ... </div>
+  <div class="card">
   <div class="stepHeader">
     <p class="stepTitle">Step 4 — Differential diagnoses</p>
     <span class="pill">choose up to 4</span>
@@ -350,6 +363,7 @@
 
 
     <!-- STEP 5 -->
+<div class="card stepPage" data-step="5"> ... Step 5 content ... </div>
 <div class="card">
   <div class="stepHeader">
     <p class="stepTitle">Step 5 — Assessments</p>
@@ -384,6 +398,7 @@
 
 
     <!-- STEP 6 -->
+<div class="card stepPage" data-step="6"> ... Step 6 content ... </div>
     <div class="card">
       <div class="stepHeader">
         <p class="stepTitle">Step 6 — Primary modality</p>
@@ -396,6 +411,7 @@
     </div>
 
     <!-- STEP 7 -->
+<div class="card stepPage" data-step="7"> ... Step 7 content ... </div>
     <div class="card">
       <div class="stepHeader">
         <p class="stepTitle">Step 7 — Intervention strategies</p>
@@ -453,6 +469,34 @@
     ];
 
     const $ = (id) => document.getElementById(id);
+// ===== Wizard navigation (Step pages) =====
+let currentStep = 1;
+const TOTAL_STEPS = 7;
+
+function showStep(n) {
+  currentStep = Math.max(1, Math.min(TOTAL_STEPS, n));
+
+  document.querySelectorAll(".stepPage").forEach(el => {
+    const stepNum = Number(el.getAttribute("data-step"));
+    el.classList.toggle("active", stepNum === currentStep);
+  });
+
+  $("stepIndicator").textContent = `Step ${currentStep} / ${TOTAL_STEPS}`;
+  $("prevStepBtn").disabled = currentStep === 1;
+  $("nextStepBtn").textContent = (currentStep === TOTAL_STEPS) ? "Finish" : "Next step";
+  
+  // Scroll to top of the step section area (keeps vignette visible above)
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+$("prevStepBtn").addEventListener("click", () => showStep(currentStep - 1));
+$("nextStepBtn").addEventListener("click", () => {
+  if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+  else setStatus("All steps complete. You can export your work.", "ok");
+});
+
+// Initialise wizard
+showStep(1);
 
     function setStatus(msg, kind="") {
       const el = $("status");
