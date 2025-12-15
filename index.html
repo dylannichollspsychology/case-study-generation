@@ -3,451 +3,230 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Case-Based Reasoning (NPE)</title>
+  <title>Guided Case-Based Reasoning Trainer</title>
+
   <style>
-    :root { color-scheme: light; }
     body{
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:#f6f6f6; color:#111; margin:0; padding:24px 14px;
+      background:#f6f6f6; color:#111;
+      margin:0; padding:24px 14px;
     }
-    .wrap{ max-width: 980px; margin:0 auto; }
-    header{ margin-bottom: 14px; }
-    h1{ margin:0 0 6px; font-size: 28px; letter-spacing:-0.02em; }
-    .sub{ margin:0; color:#444; line-height:1.45; }
+    .wrap{ max-width: 920px; margin:0 auto; }
+    h1{ margin:0 0 6px; font-size:26px; }
+    .sub{ color:#444; margin-bottom:14px; }
 
     .card{
       background:#fff; border:1px solid rgba(0,0,0,.06);
-      border-radius:14px; padding:16px; box-shadow:0 1px 10px rgba(0,0,0,.05);
+      border-radius:14px; padding:16px;
+      box-shadow:0 1px 10px rgba(0,0,0,.05);
       margin-top:12px;
     }
 
-    .row{ display:grid; grid-template-columns: 1fr; gap:12px; }
-    @media (min-width: 920px){
-      .row.cols2{ grid-template-columns: 1fr 1fr; }
-      .row.cols3{ grid-template-columns: 1fr 1fr 1fr; }
+    label{ font-size:13px; font-weight:600; display:block; margin-bottom:6px; }
+    textarea,input{
+      width:100%; padding:11px 12px; font-size:15px;
+      border-radius:10px; border:1px solid rgba(0,0,0,.18);
     }
+    textarea{ min-height:120px; resize:vertical; }
 
-    label{ display:block; font-size:13px; color:#333; margin-bottom:6px; font-weight:650; }
-    textarea, input, select{
-      width:100%; box-sizing:border-box;
-      padding:11px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.18);
-      font-size:15px; outline:none; background:#fff;
-    }
-    textarea{ min-height: 140px; resize: vertical; line-height:1.45; }
-    textarea:focus, input:focus, select:focus{ border-color: rgba(0,0,0,.45); }
-
-    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
     button{
-      padding:11px 13px; border-radius:10px; border:1px solid #000;
-      background:#000; color:#fff; cursor:pointer; font-size:15px;
+      padding:11px 14px; font-size:15px;
+      border-radius:10px; border:1px solid #000;
+      background:#000; color:#fff; cursor:pointer;
     }
-    button.secondary{ background:#fff; color:#000; border-color: rgba(0,0,0,.25); }
+    button.secondary{
+      background:#fff; color:#000;
+      border-color:rgba(0,0,0,.25);
+    }
     button:disabled{ opacity:.6; cursor:not-allowed; }
 
+    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+
     .stepHeader{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-bottom: 8px;
+      display:flex; justify-content:space-between;
+      align-items:center; margin-bottom:6px;
     }
-    .stepTitle{ font-size:15px; font-weight:800; margin:0; }
     .pill{
-      font-size:12px; color:#444; background: rgba(0,0,0,.05);
-      padding:6px 10px; border-radius: 999px;
+      font-size:12px; background:rgba(0,0,0,.05);
+      padding:6px 10px; border-radius:999px;
     }
 
-    .hint{ color:#555; font-size:13px; line-height:1.45; margin:8px 0 0; }
-    .small{ font-size:12px; color:#666; margin-top:8px; }
+    .toggleGrid{
+      display:flex; flex-wrap:wrap; gap:10px;
+      margin-top:10px;
+    }
+    .toggle{
+      padding:10px 14px; font-size:14px;
+      border-radius:999px; border:1px solid rgba(0,0,0,.25);
+      background:#fff; cursor:pointer;
+    }
+    .toggle.active{
+      background:#000; color:#fff; border-color:#000;
+    }
+    .toggle.disabled{
+      opacity:.45; cursor:not-allowed;
+    }
+
+    .small{ font-size:12px; color:#666; margin-top:6px; }
     .ok{ color:#0a7a2f; }
     .warn{ color:#b00020; }
 
-    .toggleGrid{
-      display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;
-    }
-    .toggle{
-      border:1px solid rgba(0,0,0,.18);
-      background:#fff; color:#111;
-      border-radius:999px; padding:10px 12px;
-      font-size:14px; cursor:pointer;
-      user-select:none;
-      transition: transform .04s ease;
-    }
-    .toggle:active{ transform: scale(0.98); }
-    .toggle[aria-pressed="true"]{
-      background:#000; color:#fff; border-color:#000;
-    }
-    .toggle.disabled{ opacity:.45; cursor:not-allowed; }
-    .toggle:disabled{ opacity:.45; cursor:not-allowed; }
-
-    .meta{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-      margin-top:10px; color:#444; font-size:13px;
-    }
-    .badge{
-      background: rgba(0,0,0,.05);
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:999px;
-      padding:6px 10px;
-    }
-
-    footer{ margin-top:16px; color:#777; font-size:12px; line-height:1.4; }
-    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    footer{ margin-top:18px; font-size:12px; color:#777; }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Case-Based Reasoning</h1>
-      <p class="sub">
-        Select a DSM-5 disorder → generate a fictional vignette → work through steps 1–7.
-      </p>
-    </header>
+<div class="wrap">
 
-    <!-- AI CASE GENERATION ONLY -->
-    <div class="card">
-    <div>
-      <label>&nbsp;</label>
-      <button id="generateBtn" style="width:100%;">Generate case</button>
-      <div class="small" id="status"></div>
+  <h1>Guided Case-Based Reasoning Trainer</h1>
+  <p class="sub">
+    Generate a case → reason through diagnosis, differentials, assessment and intervention (NPE-style).
+  </p>
+
+  <!-- CASE GENERATION -->
+  <div class="card">
+    <button id="generateBtn">Generate case</button>
+    <div id="status" class="small"></div>
+
+    <label style="margin-top:10px;">Generated case vignette</label>
+    <textarea id="caseText" readonly></textarea>
+
+    <div class="btnrow">
+      <button class="secondary" id="resetBtn">Reset steps</button>
+      <button class="secondary" id="saveBtn">Save</button>
+      <button class="secondary" id="loadBtn">Load</button>
+      <button class="secondary" id="exportBtn">Export</button>
     </div>
   </div>
 
-  <div class="row" style="margin-top:10px;">
-    <div>
-      <label for="caseText">Generated case vignette</label>
-      <textarea id="caseText" placeholder="Your generated vignette will appear here…" readonly></textarea>
-      <p class="small">Now do Step 1, then infer Step 3 yourself (provisional diagnosis).</p>
+  <!-- STEP 1–5 -->
+  <div class="card"><label>Step 1 — Presenting issue</label><textarea id="step1"></textarea></div>
+  <div class="card"><label>Step 2 — Maintaining factors</label><textarea id="step2"></textarea></div>
+  <div class="card"><label>Step 3 — Provisional diagnosis</label><textarea id="step3"></textarea></div>
+  <div class="card"><label>Step 4 — Differential diagnoses</label><textarea id="step4"></textarea></div>
+  <div class="card"><label>Step 5 — Assessments</label><textarea id="step5"></textarea></div>
+
+  <!-- STEP 6 -->
+  <div class="card">
+    <div class="stepHeader">
+      <strong>Step 6 — Primary modality</strong>
+      <span class="pill">Choose ONE</span>
     </div>
+    <div id="modalityGrid" class="toggleGrid"></div>
+    <div class="small">Selected: <span id="modalityLabel">—</span></div>
   </div>
 
-  <div class="btnrow">
-    <button class="secondary" id="resetBtn">Reset all steps</button>
-    <button class="secondary" id="saveBtn">Save draft</button>
-    <button class="secondary" id="loadBtn">Load saved</button>
-    <button class="secondary" id="exportBtn">Export as text</button>
+  <!-- STEP 7 -->
+  <div class="card">
+    <div class="stepHeader">
+      <strong>Step 7 — Intervention strategies</strong>
+      <span class="pill">Choose 1–4</span>
+    </div>
+    <div id="strategyGrid" class="toggleGrid"></div>
+    <div class="small">Selected: <span id="strategyCount">0</span> / 4</div>
   </div>
+
+  <footer>
+    Educational use only. This tool supports exam reasoning, not clinical decision-making.
+  </footer>
 </div>
 
-    <!-- STEP 1 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 1 — Presenting issue</p>
-        <span class="pill">1–2 sentences · timeframe + impairment</span>
-      </div>
-      <textarea id="step1" placeholder="Summarise the presenting issue in 1–2 sentences. Include timeframe + level of impairment."></textarea>
-      <p class="hint">What is the main complaint? How long? What’s impaired (work/social/study/relationships)?</p>
-    </div>
+<script>
+  const $ = id => document.getElementById(id);
 
-    <!-- STEP 2 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 2 — Maintaining factors</p>
-        <span class="pill">mechanisms, not labels</span>
-      </div>
-      <textarea id="step2" placeholder="What is maintaining the problem? (e.g., avoidance, reinforcement, rumination, negative thoughts, safety behaviours, sleep disruption, etc.)"></textarea>
-    </div>
+  const modalities = [
+    "Cognitive Behavioural Therapy",
+    "Interpersonal Therapy",
+    "Family Therapy",
+    "Psychodynamic Therapy",
+    "Narrative Therapy",
+    "Solution-Focused Therapy",
+    "Motivational Interviewing"
+  ];
 
-    <!-- STEP 3 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 3 — Provisional diagnosis</p>
-        <span class="pill">best fit</span>
-      </div>
-      <textarea id="step3" placeholder="State the provisional diagnosis and the main reasons it fits (briefly)."></textarea>
-    </div>
+  const strategies = [
+    "Psychoeducation","Behaviour modification","Gradual exposure",
+    "Exposure response prevention","Interoceptive exposure","Prolonged exposure",
+    "Cognitive restructuring","Acceptance strategies","Self-management",
+    "Relapse prevention","Breathing retraining","Problem solving skills training",
+    "Social skills training","Assertiveness skills training","Stress management",
+    "Mindfulness skills","Parenting skills"
+  ];
 
-    <!-- STEP 4 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 4 — Differential diagnoses</p>
-        <span class="pill">rule out + justify</span>
-      </div>
-      <textarea id="step4" placeholder="List differentials and briefly justify why each is less likely / ruled out."></textarea>
-    </div>
+  let selectedModality = "";
+  let selectedStrategies = [];
 
-    <!-- STEP 5 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 5 — Assessments</p>
-        <span class="pill">screening + clarification</span>
-      </div>
-      <textarea id="step5" placeholder="What assessments would help with screening and diagnostic clarification? (Include 2–5 specific tools if relevant.)"></textarea>
-    </div>
-
-    <!-- STEP 6 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 6 — Primary modality</p>
-        <span class="pill">choose ONE</span>
-      </div>
-      <div class="toggleGrid" id="modalityGrid"></div>
-      <div class="meta">
-        <span class="badge" id="modalityChosen">Chosen: —</span>
-      </div>
-    </div>
-
-    <!-- STEP 7 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 7 — Intervention strategies</p>
-        <span class="pill">choose 1–4</span>
-      </div>
-      <div class="toggleGrid" id="strategyGrid"></div>
-      <div class="meta">
-        <span class="badge" id="strategyCount">Selected: 0 / 4</span>
-        <span class="small">Suggestion: choose 1–4 only.</span>
-      </div>
-    </div>
-
-    <footer>
-      Educational use only. Not clinical advice.
-    </footer>
-  </div>
-
-  <script>
-    const LS_KEY = "npe_case_reasoning_ai_only_v1";
-
-    const modalities = [
-      "Cognitive Behavioural Therapy",
-      "Interpersonal Therapy",
-      "Family Therapy",
-      "Psychodynamic Therapy",
-      "Narrative Therapy",
-      "Solution-Focused Therapy",
-      "Motivational Interviewing"
-    ];
-
-    const strategies = [
-      "Psychoeducation",
-      "Interpersonal therapy techniques",
-      "Psychodynamic therapy techniques",
-      "Solution-focused techniques",
-      "Narrative therapy techniques",
-      "Behaviour modification",
-      "Gradual exposure",
-      "Exposure response prevention",
-      "Interoceptive exposure",
-      "Prolonged exposure",
-      "Cognitive restructuring",
-      "Acceptance strategies",
-      "Self-management",
-      "Relapse prevention",
-      "Progressive muscle relaxation",
-      "Breathing retraining",
-      "Problem solving skills training",
-      "Anger management",
-      "Social skills training",
-      "Assertiveness skills training",
-      "Stress management",
-      "Mindfulness skills",
-      "Parenting skills"
-    ];
-
-    const $ = (id) => document.getElementById(id);
-
-    function setStatus(msg, kind="") {
-      const el = $("status");
-      el.textContent = msg || "";
-      el.className = "small " + (kind || "");
-    }
-
-    // Step 6 (single selection)
-    let selectedModality = "";
-
-    function renderModalityButtons() {
-      const grid = $("modalityGrid");
-      grid.innerHTML = "";
-
-      modalities.forEach(name => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "toggle";
-        btn.textContent = name;
-        btn.setAttribute("aria-pressed", selectedModality === name ? "true" : "false");
-
-        btn.addEventListener("click", () => {
-          selectedModality = (selectedModality === name) ? "" : name; // allow deselect
-          renderModalityButtons();
-        });
-
-        grid.appendChild(btn);
-      });
-
-      $("modalityChosen").textContent = "Chosen: " + (selectedModality || "—");
-    }
-
-    // Step 7 (multi selection, max 4)
-    let selectedStrategies = [];
-
-    function renderStrategyButtons() {
-      const grid = $("strategyGrid");
-      grid.innerHTML = "";
-
-      const atMax = selectedStrategies.length >= 4;
-
-      strategies.forEach(name => {
-        const isOn = selectedStrategies.includes(name);
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "toggle";
-        btn.textContent = name;
-        btn.setAttribute("aria-pressed", isOn ? "true" : "false");
-
-        if (!isOn && atMax) btn.disabled = true;
-
-        btn.addEventListener("click", () => {
-          const idx = selectedStrategies.indexOf(name);
-          if (idx >= 0) selectedStrategies.splice(idx, 1);
-          else {
-            if (selectedStrategies.length >= 4) return;
-            selectedStrategies.push(name);
-          }
-          renderStrategyButtons();
-        });
-
-        grid.appendChild(btn);
-      });
-
-      $("strategyCount").textContent = `Selected: ${selectedStrategies.length} / 4`;
-    }
-
-    // AI generation
-    $("generateBtn").addEventListener("click", async () => {
-      const disorder = $("disorder").value;
-      if (!disorder) {
-        setStatus("Choose a DSM-5 disorder first.", "warn");
-        return;
-      }
-
-      $("generateBtn").disabled = true;
-      setStatus("Generating case…");
-
-      try {
-        const res = await fetch("/.netlify/functions/generate-case", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ disorder })
-        });
-
-        const raw = await res.text();
-
-        if (!res.ok) {
-          setStatus(`Request failed (${res.status}).`, "warn");
-          alert(raw);
-          return;
-        }
-
-        let data;
-        try { data = JSON.parse(raw); }
-        catch {
-          setStatus("Function returned non-JSON. Check your function output.", "warn");
-          alert(raw);
-          return;
-        }
-
-        const title = data.title || `Case: ${disorder}`;
-        const vignette = data.vignette || "";
-        $("caseText").value = `${title}\n\n${vignette}`.trim();
-
-        // Optional: clear steps each time you generate a new case
-        ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
-        selectedModality = "";
-        selectedStrategies = [];
-        renderModalityButtons();
-        renderStrategyButtons();
-
-        setStatus("Case generated.", "ok");
-      } catch (e) {
-        setStatus("Failed to reach the function.", "warn");
-        alert(e?.message || String(e));
-      } finally {
-        $("generateBtn").disabled = false;
-      }
+  function renderModalities(){
+    const g = $("modalityGrid"); g.innerHTML="";
+    modalities.forEach(m=>{
+      const b=document.createElement("button");
+      b.className="toggle"+(selectedModality===m?" active":"");
+      b.textContent=m;
+      b.onclick=()=>{ selectedModality=m; renderModalities(); };
+      g.appendChild(b);
     });
+    $("modalityLabel").textContent = selectedModality || "—";
+  }
 
-    // Reset / Save / Load / Export
-    $("resetBtn").addEventListener("click", () => {
-      if (!confirm("Reset all steps and selections? (Generated vignette remains.)")) return;
-      ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
-      selectedModality = "";
-      selectedStrategies = [];
-      renderModalityButtons();
-      renderStrategyButtons();
-      setStatus("Reset complete.", "ok");
-    });
-
-    $("saveBtn").addEventListener("click", () => {
-      const state = {
-        disorder: $("disorder").value,
-        caseText: $("caseText").value,
-        step1: $("step1").value,
-        step2: $("step2").value,
-        step3: $("step3").value,
-        step4: $("step4").value,
-        step5: $("step5").value,
-        selectedModality,
-        selectedStrategies
+  function renderStrategies(){
+    const g = $("strategyGrid"); g.innerHTML="";
+    strategies.forEach(s=>{
+      const active = selectedStrategies.includes(s);
+      const disabled = !active && selectedStrategies.length>=4;
+      const b=document.createElement("button");
+      b.className="toggle"+(active?" active":"")+(disabled?" disabled":"");
+      b.textContent=s;
+      b.disabled=disabled;
+      b.onclick=()=>{
+        if(active) selectedStrategies=selectedStrategies.filter(x=>x!==s);
+        else if(selectedStrategies.length<4) selectedStrategies.push(s);
+        renderStrategies();
       };
-      localStorage.setItem(LS_KEY, JSON.stringify(state));
-      setStatus("Saved locally (this browser).", "ok");
+      g.appendChild(b);
     });
+    $("strategyCount").textContent = selectedStrategies.length;
+  }
 
-    $("loadBtn").addEventListener("click", () => {
-      const raw = localStorage.getItem(LS_KEY);
-      if (!raw) { setStatus("No saved draft found.", "warn"); return; }
-      try {
-        const s = JSON.parse(raw);
-        $("disorder").value = s.disorder || "";
-        $("caseText").value = s.caseText || "";
-        $("step1").value = s.step1 || "";
-        $("step2").value = s.step2 || "";
-        $("step3").value = s.step3 || "";
-        $("step4").value = s.step4 || "";
-        $("step5").value = s.step5 || "";
-        selectedModality = s.selectedModality || "";
-        selectedStrategies = Array.isArray(s.selectedStrategies) ? s.selectedStrategies.slice(0,4) : [];
-        renderModalityButtons();
-        renderStrategyButtons();
-        setStatus("Loaded saved draft.", "ok");
-      } catch {
-        setStatus("Could not load saved draft.", "warn");
-      }
-    });
+  renderModalities(); renderStrategies();
 
-    $("exportBtn").addEventListener("click", async () => {
-      const out =
-`DSM-5 disorder: ${$("disorder").value || "(not set)"}
+  $("generateBtn").onclick = async ()=>{
+    $("status").textContent="Generating case…";
+    try{
+      const r = await fetch("/.netlify/functions/generate-case",{
+        method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"
+      });
+      const data = await r.json();
+      $("caseText").value = `${data.case.title}\n\n${data.case.vignette}`;
+      ["step1","step2","step3","step4","step5"].forEach(id=>$(id).value="");
+      selectedModality=""; selectedStrategies=[];
+      renderModalities(); renderStrategies();
+      $("status").textContent="Case generated.";
+    }catch(e){
+      $("status").textContent="Error generating case.";
+    }
+  };
 
-CASE VIGNETTE
-${$("caseText").value || "(empty)"}
+  $("resetBtn").onclick=()=>{
+    ["step1","step2","step3","step4","step5"].forEach(id=>$(id).value="");
+    selectedModality=""; selectedStrategies=[];
+    renderModalities(); renderStrategies();
+  };
 
-STEP 1 — PRESENTING ISSUE
-${$("step1").value}
+  $("exportBtn").onclick=async()=>{
+    const out =
+`CASE VIGNETTE
+${$("caseText").value}
 
-STEP 2 — MAINTAINING FACTORS
-${$("step2").value}
+MODALITY
+${selectedModality}
 
-STEP 3 — PROVISIONAL DIAGNOSIS
-${$("step3").value}
-
-STEP 4 — DIFFERENTIAL DIAGNOSES
-${$("step4").value}
-
-STEP 5 — ASSESSMENTS
-${$("step5").value}
-
-STEP 6 — PRIMARY MODALITY
-${selectedModality || "(none selected)"}
-
-STEP 7 — STRATEGIES (1–4)
-${selectedStrategies.length ? selectedStrategies.map(s => "- " + s).join("\n") : "(none selected)"}
+STRATEGIES
+${selectedStrategies.map(s=>"- "+s).join("\n")}
 `;
-      await navigator.clipboard.writeText(out);
-      setStatus("Export copied to clipboard.", "ok");
-    });
+    await navigator.clipboard.writeText(out);
+    $("status").textContent="Export copied.";
+  };
+</script>
 
-    // Init
-    renderModalityButtons();
-    renderStrategyButtons();
-  </script>
 </body>
 </html>
