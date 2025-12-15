@@ -329,9 +329,9 @@
 
     // AI generation
     $("generateBtn").addEventListener("click", async () => {
-      const disorder = $("disorder").value;
-      if (!disorder) {
-        setStatus("Choose a DSM-5 disorder first.", "warn");
+      const clientAge = $("clientAge").value;
+      if (!clientAge) {
+        setStatus("Choose a Client's Age Group first.", "warn");
         return;
       }
 
@@ -363,7 +363,7 @@
           return;
         }
 
-        const title = data.title || `Case: ${disorder}`;
+        const title = data.title || `Case: ${clientAge}`;
         const vignette = data.vignette || "";
         $("caseText").value = `${title}\n\n${vignette}`.trim();
 
@@ -396,7 +396,7 @@
 
     $("saveBtn").addEventListener("click", () => {
       const state = {
-        disorder: $("disorder").value,
+        clientAge: $("clientAge").value,
         caseText: $("caseText").value,
         step1: $("step1").value,
         step2: $("step2").value,
@@ -415,7 +415,7 @@
       if (!raw) { setStatus("No saved draft found.", "warn"); return; }
       try {
         const s = JSON.parse(raw);
-        $("disorder").value = s.disorder || "";
+        $("clientAge").value = s.clientAge || "";
         $("caseText").value = s.caseText || "";
         $("step1").value = s.step1 || "";
         $("step2").value = s.step2 || "";
@@ -434,7 +434,7 @@
 
     $("exportBtn").addEventListener("click", async () => {
       const out =
-`DSM-5 disorder: ${$("disorder").value || "(not set)"}
+`Client Age Group: ${$("clientAge").value || "(not set)"}
 
 CASE VIGNETTE
 ${$("caseText").value || "(empty)"}
