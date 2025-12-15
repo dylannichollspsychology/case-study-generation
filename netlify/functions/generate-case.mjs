@@ -184,8 +184,8 @@ Return only JSON.
       body: JSON.stringify({
         model,
         input: [
-          { role: "system", content: [{ type: "text", text: systemPrompt }] },
-          { role: "user", content: [{ type: "text", text: userPrompt }] },
+          { role: "system", content: [{ type: "input_text", text: systemPrompt }] },
+          { role: "user", content: [{ type: "input_text", text: userPrompt }] },
         ],
       }),
     });
