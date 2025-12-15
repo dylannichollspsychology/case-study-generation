@@ -18,6 +18,53 @@ function safeJsonParse(text) {
   }
 }
 
+function ageSpec(age) {
+  const a = (age || "").toLowerCase().trim();
+
+  if (a === "child") {
+    return {
+      label: "Child",
+      ageRange: "6–12",
+      settingHints:
+        "Primary school context; caregiver involved; school refusal/behavioural issues may appear; language should be developmentally appropriate.",
+      include:
+        "Reference parent/teacher observations where relevant; focus on home/school impairment; avoid adult workplace/romantic content.",
+    };
+  }
+
+  if (a === "adolescent") {
+    return {
+      label: "Adolescent",
+      ageRange: "13–17",
+      settingHints:
+        "High school context; peer relationships; family conflict; identity/independence; consider risk-screening themes only if relevant.",
+      include:
+        "Keep it developmentally appropriate; avoid adult workplace-only framing; show impairment in school/peer/family domains.",
+    };
+  }
+
+  if (a === "older adult" || a === "olderadult" || a === "older") {
+    return {
+      label: "Older adult",
+      ageRange: "65+",
+      settingHints:
+        "Retirement/health changes/bereavement; consider medical contributors and cognition as differentials where appropriate.",
+      include:
+        "Avoid school/university framing; include functional impact (daily living, social withdrawal, sleep, health appointments).",
+    };
+  }
+
+  // default adult
+  return {
+    label: "Adult",
+    ageRange: "18–64",
+    settingHints:
+      "Work/relationships/independent living; typical adult service pathways (GP referral/private practice/EAP).",
+    include:
+      "Use adult responsibilities and realistic impairment in work/social/relationship domains.",
+  };
+}
+
 export async function handler(event) {
   try {
     // CORS preflight
@@ -42,33 +89,49 @@ export async function handler(event) {
       body = {};
     }
 
-    const disorder = (body.disorder || "Generalised Anxiety Disorder").toString().slice(0, 120);
-    const ageGroup = (body.ageGroup || "Adult").toString().slice(0, 60);
-    const setting = (body.setting || "Australian private practice").toString().slice(0, 120);
+    // Updated to match your index.html:
+    // - index.html sends { clientAge: "Child"|"Adolescent"|"Adult"|"Older adult" }
+    // - keep backwards compatibility with { ageGroup: ... }
+    const clientAge =
+      (body.clientAge || body.ageGroup || "Adult").toString().slice(0, 60);
 
-    // We generate ONLY the vignette (no answers) to support guided reasoning.
+    const spec = ageSpec(clientAge);
+
+    // IMPORTANT: No disorder passed in. Step 3 must remain a real test.
+    // So we ask the model to pick ONE plausible presentation appropriate for that age group,
+    // and include subtle distractors.
     const instructions = [
-      "You generate fictional psychology exam-style case vignettes for study.",
+      "You generate fictional psychology exam-style case vignettes for study in Australia.",
       "Do NOT include real identifying details.",
       "Do NOT provide medical or legal advice.",
       "Return ONLY valid JSON. No markdown. No extra keys.",
+      "The goal is to test diagnostic reasoning, so do not reveal a diagnosis label in the vignette or title.",
     ].join("\n");
 
     const prompt = `
-Create ONE fictional case vignette consistent with DSM-5 style features for: ${disorder}.
-Population: ${ageGroup}.
-Setting: ${setting}.
+Create ONE fictional case vignette for NPE-style practice.
 
-The vignette should be 200–320 words, written in neutral clinical language.
+Client age group: ${spec.label} (typical range ${spec.ageRange}).
+Context guidance: ${spec.settingHints}
+Constraints: ${spec.include}
+
+Requirements:
+- Vignette length: 200–320 words.
+- Neutral clinical style, readable.
+- Include timeframe + functional impairment.
+- Include 1–2 subtle distractor features that could tempt a different diagnosis.
+- Do NOT name the diagnosis or DSM label in the vignette or title.
 
 Return ONLY JSON with exactly these keys:
 {
+  "title": "string (do not include diagnosis name)",
   "vignette": "string",
+  "presenting_problem": "string (1 sentence stem-like presenting issue)"
 }
 `.trim();
 
     const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
       instructions,
       input: prompt,
       temperature: 0.6,
@@ -98,10 +161,18 @@ Return ONLY JSON with exactly these keys:
     }
 
     // Enforce the minimal schema
-    const title = typeof data.title === "string" ? data.title : `Case vignette: ${disorder}`;
-    const vignette = typeof data.vignette === "string" ? data.vignette : "";
+    const title =
+      typeof data.title === "string" && data.title.trim()
+        ? data.title.trim()
+        : `Case vignette (${spec.label})`;
+
+    const vignette =
+      typeof data.vignette === "string" ? data.vignette.trim() : "";
+
     const presenting_problem =
-      typeof data.presenting_problem === "string" ? data.presenting_problem : "";
+      typeof data.presenting_problem === "string"
+        ? data.presenting_problem.trim()
+        : "";
 
     if (!vignette) {
       return {
@@ -117,7 +188,12 @@ Return ONLY JSON with exactly these keys:
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ title, vignette, presenting_problem }),
+      body: JSON.stringify({
+        title,
+        vignette,
+        presenting_problem,
+        clientAge: spec.label, // helpful for debugging; remove if you don’t want it
+      }),
     };
   } catch (err) {
     return {
