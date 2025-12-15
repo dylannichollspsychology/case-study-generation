@@ -342,7 +342,9 @@
         const res = await fetch("/.netlify/functions/generate-case", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ disorder })
+          body: JSON.stringify({
+  clientAge: document.getElementById("clientAge")?.value || ""
+})
         });
 
         const raw = await res.text();
