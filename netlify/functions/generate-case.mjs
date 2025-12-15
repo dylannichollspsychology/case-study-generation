@@ -63,9 +63,7 @@ The vignette should be 200–320 words, written in neutral clinical language.
 
 Return ONLY JSON with exactly these keys:
 {
-  "title": "string",
   "vignette": "string",
-  "presenting_problem": "string (1 sentence)"
 }
 `.trim();
 
