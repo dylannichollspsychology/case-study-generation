@@ -452,7 +452,7 @@
     // Reset / Save / Load / Export
     $("resetBtn").addEventListener("click", () => {
       if (!confirm("Reset all steps and selections? (Generated vignette remains.)")) return;
-      ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
+      ["step1","step2","step3","step4"].forEach(id => $(id).value = "");
       selectedModality = "";
       selectedStrategies = [];
       renderModalityButtons();
@@ -468,7 +468,7 @@
         step2: $("step2").value,
         step3: $("step3").value,
         step4: $("step4").value,
-        step5: $("step5").value,
+        selectedAssessments,
         selectedModality,
         selectedStrategies
       };
@@ -488,10 +488,14 @@
         $("step3").value = s.step3 || "";
         $("step4").value = s.step4 || "";
         $("step5").value = s.step5 || "";
+        selectedAssessments = Array.isArray(s.selectedAssessments) ? s.selectedAssessments : [];
+renderAssessmentButtons();
         selectedModality = s.selectedModality || "";
         selectedStrategies = Array.isArray(s.selectedStrategies) ? s.selectedStrategies.slice(0,4) : [];
         renderModalityButtons();
         renderStrategyButtons();
+        selectedAssessments = [];
+renderAssessmentButtons();
         setStatus("Loaded saved draft.", "ok");
       } catch {
         setStatus("Could not load saved draft.", "warn");
@@ -518,7 +522,8 @@ STEP 4 — DIFFERENTIAL DIAGNOSES
 ${$("step4").value}
 
 STEP 5 — ASSESSMENTS
-${$("step5").value}
+${selectedAssessments.length ? selectedAssessments.map(a => "- " + a).join("\n") : "(none selected)"}
+
 
 STEP 6 — PRIMARY MODALITY
 ${selectedModality || "(none selected)"}
@@ -636,11 +641,111 @@ function renderDiagnosisButtons() {
   $("diagnosisChosen").textContent =
     "Chosen: " + (selectedDiagnosis || "—");
 }
+    // ===== STEP 5 — ASSESSMENTS (multi-select) =====
+
+const assessmentGroups = [
+  {
+    name: "Intelligence and Educational",
+    items: [
+      "WAIS (Wechsler Adult Intelligence Scale)",
+      "WISC (Wechsler Intelligence Scale for Children)",
+      "WPPSI (Wechsler Preschool and Primary Scale of Intelligence)",
+      "Stanford-Binet (Stanford-Binet Intelligence Scales)",
+      "WASI (Wechsler Abbreviated Scale of Intelligence)",
+      "Woodcock-Johnson Test of Cognitive Abilities",
+      "Raven's Standard Progressive Matrices",
+      "WIAT (Wechsler Individual Achievement Test)"
+    ]
+  },
+  {
+    name: "Memory",
+    items: [
+      "WMS (Wechsler Memory Scale)",
+      "WRAML (Wide Range Assessment of Memory and Learning)"
+    ]
+  },
+  {
+    name: "Vocational Scales",
+    items: [
+      "SDS (Self Directed Search)",
+      "Strong (Strong Interest Inventory)"
+    ]
+  },
+  {
+    name: "Personality",
+    items: [
+      "16PF (Sixteen Personality Factor Questionnaire)",
+      "NEO (NEO Personality Inventory)"
+    ]
+  },
+  {
+    name: "Functioning and Quality of Life",
+    items: [
+      "WHO-DAS (World Health Organisation Disability Assessment Scale)",
+      "WHO-QOL (World Health Organisation Quality of Life Scale)",
+      "ABAS (Adaptive Behavior Assessment System)",
+      "ORS (Outcome Rating Scale)"
+    ]
+  },
+  {
+    name: "Clinical",
+    items: [
+      "BDI (Beck Depression Inventory)",
+      "DASS (Depression Anxiety Stress Scale)",
+      "K10 (Kessler Psychological Distress Scale)",
+      "STAI (State Trait Anxiety Inventory)",
+      "MMPI (Minnesota Multiphasic Personality Inventory)",
+      "PAI (Personality Assessment Inventory)",
+      "PHQ-9 (Patient Health Questionnaire 9 Item)",
+      "Structured Clinical Interview for DSM (SCID)"
+    ]
+  },
+  {
+    name: "Child and Adolescent",
+    items: [
+      "CBCL (Achenbach Child Behaviour Checklist)",
+      "SDQ (Strengths and Difficulties Questionnaire)"
+    ]
+  }
+];
+
+let selectedAssessments = [];
+
+function renderAssessmentButtons() {
+  const grids = document.querySelectorAll(".assessmentGrid");
+  grids.forEach((grid, i) => {
+    grid.innerHTML = "";
+    assessmentGroups[i].items.forEach(name => {
+      const isOn = selectedAssessments.includes(name);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toggle";
+      btn.textContent = name;
+      btn.setAttribute("aria-pressed", isOn ? "true" : "false");
+
+      btn.addEventListener("click", () => {
+        const idx = selectedAssessments.indexOf(name);
+        if (idx >= 0) selectedAssessments.splice(idx, 1);
+        else selectedAssessments.push(name);
+        renderAssessmentButtons();
+      });
+
+      grid.appendChild(btn);
+    });
+  });
+
+  $("assessmentCount").textContent = `Selected: ${selectedAssessments.length}`;
+}
+
 
 // Init
 renderDiagnosisButtons();
 renderModalityButtons();
 renderStrategyButtons();
+    selectedAssessments = [];
+renderAssessmentButtons();
+
   </script>
 </body>
 </html>
