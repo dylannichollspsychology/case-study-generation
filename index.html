@@ -159,13 +159,58 @@
     </div>
 
     <!-- STEP 3 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 3 — Provisional diagnosis</p>
-        <span class="pill">best fit</span>
-      </div>
-      <textarea id="step3" placeholder="State the provisional diagnosis and the main reasons it fits (briefly)."></textarea>
-    </div>
+<!-- STEP 3 -->
+<div class="card">
+  <div class="stepHeader">
+    <p class="stepTitle">Step 3 — Provisional diagnosis</p>
+    <span class="pill">choose ONE · best fit</span>
+  </div>
+
+  <!-- Neurodevelopmental -->
+  <p class="small"><strong>Neurodevelopmental disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Psychotic -->
+  <p class="small"><strong>Psychotic disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Bipolar & Depressive -->
+  <p class="small"><strong>Bipolar & depressive disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Anxiety & OCD -->
+  <p class="small"><strong>Anxiety & related disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Trauma -->
+  <p class="small"><strong>Trauma & stressor-related disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Eating -->
+  <p class="small"><strong>Eating disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Disruptive -->
+  <p class="small"><strong>Disruptive & impulse-control disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Substance -->
+  <p class="small"><strong>Substance-related disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Personality -->
+  <p class="small"><strong>Personality disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <!-- Neurocognitive -->
+  <p class="small"><strong>Neurocognitive disorders</strong></p>
+  <div class="toggleGrid diagnosisGrid"></div>
+
+  <div class="meta">
+    <span class="badge" id="diagnosisChosen">Chosen: —</span>
+  </div>
+</div>
+
 
     <!-- STEP 4 -->
     <div class="card">
@@ -456,10 +501,122 @@ ${selectedModality || "(none selected)"}
 STEP 7 — STRATEGIES (1–4)
 ${selectedStrategies.length ? selectedStrategies.map(s => "- " + s).join("\n") : "(none selected)"}
 `;
+      
       await navigator.clipboard.writeText(out);
       setStatus("Export copied to clipboard.", "ok");
     });
 
+const diagnosisGroups = [
+    {
+      name: "Neurodevelopmental",
+      items: [
+        "Attention-Deficit/Hyperactivity Disorder",
+        "Autism Spectrum Disorder"
+      ]
+    },
+    {
+      name: "Psychotic",
+      items: [
+        "Schizophrenia"
+      ]
+    },
+    {
+      name: "Bipolar & Depressive",
+      items: [
+        "Bipolar I Disorder",
+        "Bipolar II Disorder",
+        "Major Depressive Disorder",
+        "Persistent Depressive Disorder"
+      ]
+    },
+    {
+      name: "Anxiety & Related",
+      items: [
+        "Generalised Anxiety Disorder",
+        "Panic Disorder",
+        "Social Anxiety Disorder",
+        "Separation Anxiety Disorder",
+        "Obsessive-Compulsive Disorder"
+      ]
+    },
+    {
+      name: "Trauma & Stressor-Related",
+      items: [
+        "Post-Traumatic Stress Disorder",
+        "Adjustment Disorder"
+      ]
+    },
+    {
+      name: "Eating",
+      items: [
+        "Anorexia Nervosa",
+        "Bulimia Nervosa",
+        "Binge-Eating Disorder"
+      ]
+    },
+    {
+      name: "Disruptive",
+      items: [
+        "Oppositional Defiant Disorder",
+        "Conduct Disorder"
+      ]
+    },
+    {
+      name: "Substance",
+      items: [
+        "Substance Use Disorder"
+      ]
+    },
+    {
+      name: "Personality",
+      items: [
+        "Borderline Personality Disorder",
+        "Antisocial Personality Disorder"
+      ]
+    },
+    {
+      name: "Neurocognitive",
+      items: [
+        "Delirium",
+        "Mild Neurocognitive Disorder",
+        "Major Neurocognitive Disorder"
+      ]
+    }
+  ];
+
+  let selectedDiagnosis = "";
+
+  function renderDiagnosisButtons() {
+    const grids = document.querySelectorAll(".diagnosisGrid");
+    grids.forEach((grid, i) => {
+      grid.innerHTML = "";
+      diagnosisGroups[i].items.forEach(name => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "toggle";
+        btn.textContent = name;
+        btn.setAttribute(
+          "aria-pressed",
+          selectedDiagnosis === name ? "true" : "false"
+        );
+
+        btn.addEventListener("click", () => {
+          selectedDiagnosis = (selectedDiagnosis === name) ? "" : name;
+          renderDiagnosisButtons();
+        });
+
+        grid.appendChild(btn);
+      });
+    });
+
+    document.getElementById("diagnosisChosen").textContent =
+      "Chosen: " + (selectedDiagnosis || "—");
+  }
+
+  // initialise
+  renderDiagnosisButtons();}
+
+    
     // Init
     renderModalityButtons();
     renderStrategyButtons();
