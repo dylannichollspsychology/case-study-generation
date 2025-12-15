@@ -157,8 +157,7 @@
       </div>
       <textarea id="step2" placeholder="What is maintaining the problem? (e.g., avoidance, reinforcement, rumination, negative thoughts, safety behaviours, sleep disruption, etc.)"></textarea>
     </div>
-
-    <!-- STEP 3 -->
+    
 <!-- STEP 3 -->
 <div class="card">
   <div class="stepHeader">
@@ -166,50 +165,75 @@
     <span class="pill">choose ONE · best fit</span>
   </div>
 
-  <!-- Neurodevelopmental -->
-  <p class="small"><strong>Neurodevelopmental disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+  <label for="dxSelect">Select one diagnosis</label>
+  <select id="dxSelect">
+    <option value="">— Choose —</option>
 
-  <!-- Psychotic -->
-  <p class="small"><strong>Psychotic disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Neurodevelopmental disorders">
+      <option>Attention-Deficit/Hyperactivity Disorder</option>
+      <option>Autism Spectrum Disorder</option>
+    </optgroup>
 
-  <!-- Bipolar & Depressive -->
-  <p class="small"><strong>Bipolar & depressive disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Psychotic disorders">
+      <option>Schizophrenia</option>
+    </optgroup>
 
-  <!-- Anxiety & OCD -->
-  <p class="small"><strong>Anxiety & related disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Bipolar & depressive disorders">
+      <option>Bipolar I Disorder</option>
+      <option>Bipolar II Disorder</option>
+      <option>Major Depressive Disorder</option>
+      <option>Persistent Depressive Disorder</option>
+    </optgroup>
 
-  <!-- Trauma -->
-  <p class="small"><strong>Trauma & stressor-related disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Anxiety & related disorders">
+      <option>Generalised Anxiety Disorder</option>
+      <option>Panic Disorder</option>
+      <option>Social Anxiety Disorder</option>
+      <option>Separation Anxiety Disorder</option>
+      <option>Obsessive-Compulsive Disorder</option>
+    </optgroup>
 
-  <!-- Eating -->
-  <p class="small"><strong>Eating disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Trauma & stressor-related disorders">
+      <option>Post-Traumatic Stress Disorder</option>
+      <option>Adjustment Disorder</option>
+    </optgroup>
 
-  <!-- Disruptive -->
-  <p class="small"><strong>Disruptive & impulse-control disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Somatic symptom & related disorders">
+      <option>Somatic Symptom Disorder</option>
+    </optgroup>
 
-  <!-- Substance -->
-  <p class="small"><strong>Substance-related disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Eating disorders">
+      <option>Anorexia Nervosa</option>
+      <option>Bulimia Nervosa</option>
+      <option>Binge-Eating Disorder</option>
+    </optgroup>
 
-  <!-- Personality -->
-  <p class="small"><strong>Personality disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Disruptive & impulse-control disorders">
+      <option>Oppositional Defiant Disorder</option>
+      <option>Conduct Disorder</option>
+    </optgroup>
 
-  <!-- Neurocognitive -->
-  <p class="small"><strong>Neurocognitive disorders</strong></p>
-  <div class="toggleGrid diagnosisGrid"></div>
+    <optgroup label="Substance-related disorders">
+      <option>Substance Use Disorder</option>
+    </optgroup>
+
+    <optgroup label="Personality disorders">
+      <option>Borderline Personality Disorder</option>
+      <option>Antisocial Personality Disorder</option>
+    </optgroup>
+
+    <optgroup label="Neurocognitive disorders">
+      <option>Delirium</option>
+      <option>Mild Neurocognitive Disorder</option>
+      <option>Major Neurocognitive Disorder</option>
+    </optgroup>
+  </select>
 
   <div class="meta">
-    <span class="badge" id="diagnosisChosen">Chosen: —</span>
+    <span class="badge" id="dxChosen">Chosen: —</span>
   </div>
 </div>
+
 
 
     <!-- STEP 4 -->
@@ -455,6 +479,8 @@
       ["step1","step2","step3","step4"].forEach(id => $(id).value = "");
       selectedModality = "";
       selectedStrategies = [];
+      $("dxSelect").value = "";
+updateDxChosen();
       renderModalityButtons();
       renderStrategyButtons();
       setStatus("Reset complete.", "ok");
@@ -471,6 +497,7 @@
         selectedAssessments,
         selectedModality,
         selectedStrategies
+        selectedDiagnosis
       };
       localStorage.setItem(LS_KEY, JSON.stringify(state));
       setStatus("Saved locally (this browser).", "ok");
@@ -488,6 +515,8 @@
         $("step3").value = s.step3 || "";
         $("step4").value = s.step4 || "";
         $("step5").value = s.step5 || "";
+        $("dxSelect").value = s.selectedDiagnosis || "";
+updateDxChosen();
         selectedAssessments = Array.isArray(s.selectedAssessments) ? s.selectedAssessments : [];
 renderAssessmentButtons();
         selectedModality = s.selectedModality || "";
@@ -516,7 +545,7 @@ STEP 2 — MAINTAINING FACTORS
 ${$("step2").value}
 
 STEP 3 — PROVISIONAL DIAGNOSIS
-${$("step3").value}
+${selectedDiagnosis || "(none selected)"}
 
 STEP 4 — DIFFERENTIAL DIAGNOSES
 ${$("step4").value}
@@ -535,112 +564,19 @@ ${selectedStrategies.length ? selectedStrategies.map(s => "- " + s).join("\n") :
       await navigator.clipboard.writeText(out);
       setStatus("Export copied to clipboard.", "ok");
     });
-    // ===== STEP 3 — DIAGNOSIS SELECTION =====
 
-const diagnosisGroups = [
-  {
-    name: "Neurodevelopmental",
-    items: [
-      "Attention-Deficit/Hyperactivity Disorder",
-      "Autism Spectrum Disorder"
-    ]
-  },
-  {
-    name: "Psychotic",
-    items: ["Schizophrenia"]
-  },
-  {
-    name: "Bipolar & Depressive",
-    items: [
-      "Bipolar I Disorder",
-      "Bipolar II Disorder",
-      "Major Depressive Disorder",
-      "Persistent Depressive Disorder"
-    ]
-  },
-  {
-    name: "Anxiety & Related",
-    items: [
-      "Generalised Anxiety Disorder",
-      "Panic Disorder",
-      "Social Anxiety Disorder",
-      "Separation Anxiety Disorder",
-      "Obsessive-Compulsive Disorder"
-    ]
-  },
-  {
-    name: "Trauma & Stressor-Related",
-    items: [
-      "Post-Traumatic Stress Disorder",
-      "Adjustment Disorder"
-    ]
-  },
-  {
-    name: "Eating",
-    items: [
-      "Anorexia Nervosa",
-      "Bulimia Nervosa",
-      "Binge-Eating Disorder"
-    ]
-  },
-  {
-    name: "Disruptive",
-    items: [
-      "Oppositional Defiant Disorder",
-      "Conduct Disorder"
-    ]
-  },
-  {
-    name: "Substance",
-    items: ["Substance Use Disorder"]
-  },
-  {
-    name: "Personality",
-    items: [
-      "Borderline Personality Disorder",
-      "Antisocial Personality Disorder"
-    ]
-  },
-  {
-    name: "Neurocognitive",
-    items: [
-      "Delirium",
-      "Mild Neurocognitive Disorder",
-      "Major Neurocognitive Disorder"
-    ]
-  }
-];
-
+// ===== STEP 3 — DIAGNOSIS (dropdown, single-select) =====
 let selectedDiagnosis = "";
 
-function renderDiagnosisButtons() {
-  const grids = document.querySelectorAll(".diagnosisGrid");
-
-  grids.forEach((grid, i) => {
-    grid.innerHTML = "";
-
-    diagnosisGroups[i].items.forEach(name => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "toggle";
-      btn.textContent = name;
-      btn.setAttribute(
-        "aria-pressed",
-        selectedDiagnosis === name ? "true" : "false"
-      );
-
-      btn.addEventListener("click", () => {
-        selectedDiagnosis = (selectedDiagnosis === name) ? "" : name;
-        renderDiagnosisButtons();
-      });
-
-      grid.appendChild(btn);
-    });
-  });
-
-  $("diagnosisChosen").textContent =
-    "Chosen: " + (selectedDiagnosis || "—");
+function updateDxChosen() {
+  selectedDiagnosis = $("dxSelect")?.value || "";
+  $("dxChosen").textContent = "Chosen: " + (selectedDiagnosis || "—");
 }
+
+$("dxSelect").addEventListener("change", updateDxChosen);
+updateDxChosen(); // initialise
+
+
     // ===== STEP 5 — ASSESSMENTS (multi-select) =====
 
 const assessmentGroups = [
