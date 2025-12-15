@@ -134,57 +134,80 @@
 </div>
 
 <script>
-  $("generateBtn").onclick = async () => {
-    $("status").textContent = "Generating case…";
+  // tiny helper
+  const $ = (id) => document.getElementById(id);
 
-    try {
-      const r = await fetch("/.netlify/functions/generate-case", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}) // no disorder passed
-      });
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = $("generateBtn");
+    const statusEl = $("status");
+    const caseEl = $("caseText");
 
-      const raw = await r.text(); // read as text first so we can show errors
-
-      if (!r.ok) {
-        $("status").textContent = `Function error (${r.status}). See alert.`;
-        alert(raw);
-        return;
-      }
-
-      let data;
-      try {
-        data = JSON.parse(raw);
-      } catch (e) {
-        $("status").textContent = "Function returned non-JSON. See alert.";
-        alert(raw);
-        return;
-      }
-
-      const title = data?.case?.title || "Generated Case";
-      const vignette = data?.case?.vignette || "";
-
-      if (!vignette) {
-        $("status").textContent = "No vignette returned. See alert.";
-        alert(raw);
-        return;
-      }
-
-      $("caseText").value = `${title}\n\n${vignette}`.trim();
-
-      ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
-      selectedModality = "";
-      selectedStrategies = [];
-      renderModalities();
-      renderStrategies();
-
-      $("status").textContent = "Case generated.";
-    } catch (e) {
-      $("status").textContent = "Network/JS error. See alert.";
-      alert(e?.message || String(e));
+    if (!btn) {
+      alert("generateBtn not found — check the button id='generateBtn'.");
+      return;
     }
-  };
+
+    btn.addEventListener("click", async () => {
+      statusEl.textContent = "Generating case…";
+
+      try {
+        const r = await fetch("/.netlify/functions/generate-case", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}) // ok
+        });
+
+        const raw = await r.text();
+
+        if (!r.ok) {
+          statusEl.textContent = `Function error (${r.status}). See alert.`;
+          alert(raw);
+          return;
+        }
+
+        let data;
+        try { data = JSON.parse(raw); }
+        catch {
+          statusEl.textContent = "Function returned non-JSON. See alert.";
+          alert(raw);
+          return;
+        }
+
+        // ✅ Support BOTH response shapes:
+        //  A) { title, vignette, ... }
+        //  B) { case: { title, vignette, ... } }
+        const title = data?.title || data?.case?.title || "Generated Case";
+        const vignette = data?.vignette || data?.case?.vignette || "";
+
+        if (!vignette) {
+          statusEl.textContent = "No vignette returned. See alert.";
+          alert(raw);
+          return;
+        }
+
+        caseEl.value = `${title}\n\n${vignette}`.trim();
+
+        // clear steps (only if they exist)
+        ["step1","step2","step3","step4","step5"].forEach(id => {
+          const el = $(id);
+          if (el) el.value = "";
+        });
+
+        // only reset these if they exist in your page JS
+        if (typeof selectedModality !== "undefined") selectedModality = "";
+        if (typeof selectedStrategies !== "undefined") selectedStrategies = [];
+        if (typeof renderModalities === "function") renderModalities();
+        if (typeof renderStrategies === "function") renderStrategies();
+
+        statusEl.textContent = "Case generated.";
+      } catch (e) {
+        statusEl.textContent = "Network/JS error. See alert.";
+        alert(e?.message || String(e));
+      }
+    });
+  });
 </script>
+
 
 
 </body>
