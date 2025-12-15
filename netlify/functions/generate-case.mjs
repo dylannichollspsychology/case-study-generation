@@ -148,18 +148,17 @@ Client age group: ${spec.label} (typical range ${spec.ageRange}).
 Context guidance: ${spec.settingHints}
 Constraints: ${spec.include}
 Hidden target presentation: ${targetDisorder}
-Do NOT include the diagnosis name or DSM label in the vignette or title.
+Do NOT include the diagnosis name or DSM label in the vignette.
 
 Requirements:
 - Vignette length: 200–320 words.
 - Neutral clinical style, readable.
 - Include timeframe + functional impairment.
 - Include 1–2 subtle distractor features that could tempt a different diagnosis.
-- Do NOT name the diagnosis or DSM label in the vignette or title.
+- Do NOT name the diagnosis or DSM label in the vignette.
 
 Return ONLY JSON with exactly these keys:
 {
-  "title": "string (do not include diagnosis name)",
   "vignette": "string",
   "presenting_problem": "string (1 sentence stem-like presenting issue)"
 }
@@ -196,11 +195,6 @@ Return ONLY JSON with exactly these keys:
     }
 
     // Enforce the minimal schema
-    const title =
-      typeof data.title === "string" && data.title.trim()
-        ? data.title.trim()
-        : `Case vignette (${spec.label})`;
-
     const vignette =
       typeof data.vignette === "string" ? data.vignette.trim() : "";
 
@@ -224,7 +218,6 @@ Return ONLY JSON with exactly these keys:
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        title,
         vignette,
         presenting_problem,
         clientAge: spec.label, // helpful for debugging; remove if you don’t want it
