@@ -54,6 +54,24 @@
       font-size:12px; color:#444; background: rgba(0,0,0,.05);
       padding:6px 10px; border-radius: 999px;
     }
+.chips{
+  display:flex; flex-wrap:wrap; gap:8px;
+  padding:10px; border:1px solid rgba(0,0,0,.12);
+  border-radius:12px; background: rgba(0,0,0,.02);
+  min-height: 44px;
+}
+.chip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:999px;
+  border:1px solid rgba(0,0,0,.18);
+  background:#fff; font-size:13px;
+}
+.chip button{
+  border:none; background:transparent; color:#000;
+  cursor:pointer; font-size:16px; line-height:1;
+  padding:0; margin:0;
+}
+.chip button:focus{ outline:2px solid rgba(0,0,0,.35); outline-offset:2px; }
 
     .hint{ color:#555; font-size:13px; line-height:1.45; margin:8px 0 0; }
     .small{ font-size:12px; color:#666; margin-top:8px; }
@@ -237,13 +255,99 @@
 
 
     <!-- STEP 4 -->
-    <div class="card">
-      <div class="stepHeader">
-        <p class="stepTitle">Step 4 — Differential diagnoses</p>
-        <span class="pill">rule out + justify</span>
+<div class="card">
+  <div class="stepHeader">
+    <p class="stepTitle">Step 4 — Differential diagnoses</p>
+    <span class="pill">choose up to 4</span>
+  </div>
+
+  <div class="row cols2">
+    <div>
+      <label for="diffSelect">Add a differential</label>
+      <select id="diffSelect">
+        <option value="">— Choose —</option>
+
+        <optgroup label="Neurodevelopmental disorders">
+          <option>Attention-Deficit/Hyperactivity Disorder</option>
+          <option>Autism Spectrum Disorder</option>
+        </optgroup>
+
+        <optgroup label="Psychotic disorders">
+          <option>Schizophrenia</option>
+        </optgroup>
+
+        <optgroup label="Bipolar & depressive disorders">
+          <option>Bipolar I Disorder</option>
+          <option>Bipolar II Disorder</option>
+          <option>Major Depressive Disorder</option>
+          <option>Persistent Depressive Disorder</option>
+        </optgroup>
+
+        <optgroup label="Anxiety & related disorders">
+          <option>Generalised Anxiety Disorder</option>
+          <option>Panic Disorder</option>
+          <option>Social Anxiety Disorder</option>
+          <option>Separation Anxiety Disorder</option>
+          <option>Obsessive-Compulsive Disorder</option>
+        </optgroup>
+
+        <optgroup label="Trauma & stressor-related disorders">
+          <option>Post-Traumatic Stress Disorder</option>
+          <option>Adjustment Disorder</option>
+        </optgroup>
+
+        <optgroup label="Somatic symptom & related disorders">
+          <option>Somatic Symptom Disorder</option>
+        </optgroup>
+
+        <optgroup label="Eating disorders">
+          <option>Anorexia Nervosa</option>
+          <option>Bulimia Nervosa</option>
+          <option>Binge-Eating Disorder</option>
+        </optgroup>
+
+        <optgroup label="Disruptive & impulse-control disorders">
+          <option>Oppositional Defiant Disorder</option>
+          <option>Conduct Disorder</option>
+        </optgroup>
+
+        <optgroup label="Substance-related disorders">
+          <option>Substance Use Disorder</option>
+        </optgroup>
+
+        <optgroup label="Personality disorders">
+          <option>Borderline Personality Disorder</option>
+          <option>Antisocial Personality Disorder</option>
+        </optgroup>
+
+        <optgroup label="Neurocognitive disorders">
+          <option>Delirium</option>
+          <option>Mild Neurocognitive Disorder</option>
+          <option>Major Neurocognitive Disorder</option>
+        </optgroup>
+      </select>
+
+      <div class="btnrow" style="margin-top:10px;">
+        <button type="button" class="secondary" id="addDiffBtn">Add differential</button>
+        <button type="button" class="secondary" id="clearDiffBtn">Clear</button>
       </div>
-      <textarea id="step4" placeholder="List differentials and briefly justify why each is less likely / ruled out."></textarea>
+
+      <div class="meta">
+        <span class="badge" id="diffCount">Selected: 0 / 4</span>
+        <span class="small">Suggestion: choose 1–4 only.</span>
+      </div>
     </div>
+
+    <div>
+      <label>Selected differentials</label>
+      <div id="diffChips" class="chips" aria-live="polite"></div>
+
+      <label for="diffRationale" style="margin-top:12px;">Brief rule-out rationale (optional)</label>
+      <textarea id="diffRationale" placeholder="Optional: 1–2 lines each explaining why each differential is less likely."></textarea>
+    </div>
+  </div>
+</div>
+
 
     <!-- STEP 5 -->
 <div class="card">
@@ -481,6 +585,10 @@
       selectedStrategies = [];
       $("dxSelect").value = "";
 updateDxChosen();
+      selectedDifferentials = [];
+$("diffSelect").value = "";
+$("diffRationale").value = "";
+renderDifferentials();
       renderModalityButtons();
       renderStrategyButtons();
       setStatus("Reset complete.", "ok");
@@ -494,6 +602,8 @@ updateDxChosen();
         step2: $("step2").value,
         step3: $("step3").value,
         step4: $("step4").value,
+        selectedDifferentials,
+diffRationale: $("diffRationale").value
         selectedAssessments,
         selectedModality,
         selectedStrategies
@@ -517,6 +627,9 @@ updateDxChosen();
         $("step5").value = s.step5 || "";
         $("dxSelect").value = s.selectedDiagnosis || "";
 updateDxChosen();
+        selectedDifferentials = Array.isArray(s.selectedDifferentials) ? s.selectedDifferentials.slice(0,4) : [];
+$("diffRationale").value = s.diffRationale || "";
+renderDifferentials();
         selectedAssessments = Array.isArray(s.selectedAssessments) ? s.selectedAssessments : [];
 renderAssessmentButtons();
         selectedModality = s.selectedModality || "";
@@ -547,8 +660,11 @@ ${$("step2").value}
 STEP 3 — PROVISIONAL DIAGNOSIS
 ${selectedDiagnosis || "(none selected)"}
 
-STEP 4 — DIFFERENTIAL DIAGNOSES
-${$("step4").value}
+STEP 4 — DIFFERENTIAL DIAGNOSES (up to 4)
+${selectedDifferentials.length ? selectedDifferentials.map(d => "- " + d).join("\n") : "(none selected)"}
+
+Rule-out rationale (optional):
+${$("diffRationale").value || "(blank)"}
 
 STEP 5 — ASSESSMENTS
 ${selectedAssessments.length ? selectedAssessments.map(a => "- " + a).join("\n") : "(none selected)"}
@@ -575,6 +691,61 @@ function updateDxChosen() {
 
 $("dxSelect").addEventListener("change", updateDxChosen);
 updateDxChosen(); // initialise
+
+    // ===== STEP 4 — DIFFERENTIALS (dropdown + add chips, max 4) =====
+let selectedDifferentials = [];
+
+function renderDifferentials() {
+  const wrap = $("diffChips");
+  wrap.innerHTML = "";
+
+  selectedDifferentials.forEach((name) => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.innerHTML = `
+      <span>${name}</span>
+      <button type="button" aria-label="Remove ${name}">×</button>
+    `;
+
+    chip.querySelector("button").addEventListener("click", () => {
+      selectedDifferentials = selectedDifferentials.filter((d) => d !== name);
+      renderDifferentials();
+    });
+
+    wrap.appendChild(chip);
+  });
+
+  $("diffCount").textContent = `Selected: ${selectedDifferentials.length} / 4`;
+
+  // lock add button when at max
+  $("addDiffBtn").disabled = selectedDifferentials.length >= 4;
+}
+
+$("addDiffBtn").addEventListener("click", () => {
+  const choice = $("diffSelect").value;
+  if (!choice) return;
+
+  if (selectedDifferentials.includes(choice)) {
+    alert("That differential is already selected.");
+    return;
+  }
+
+  if (selectedDifferentials.length >= 4) {
+    alert("You can select up to 4 differentials.");
+    return;
+  }
+
+  selectedDifferentials.push(choice);
+  $("diffSelect").value = "";
+  renderDifferentials();
+});
+
+$("clearDiffBtn").addEventListener("click", () => {
+  selectedDifferentials = [];
+  renderDifferentials();
+});
+
+renderDifferentials(); // init
 
 
     // ===== STEP 5 — ASSESSMENTS (multi-select) =====
