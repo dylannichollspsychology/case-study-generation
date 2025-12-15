@@ -692,60 +692,78 @@ function updateDxChosen() {
 $("dxSelect").addEventListener("change", updateDxChosen);
 updateDxChosen(); // initialise
 
-    // ===== STEP 4 — DIFFERENTIALS (dropdown + add chips, max 4) =====
-let selectedDifferentials = [];
+// ===== STEP 4 — DIFFERENTIALS (dropdown + add chips, max 4) =====
+window.addEventListener("DOMContentLoaded", () => {
+  // If these elements don't exist, don't do anything (prevents silent failures)
+  const diffSelect = document.getElementById("diffSelect");
+  const addBtn = document.getElementById("addDiffBtn");
+  const clearBtn = document.getElementById("clearDiffBtn");
+  const chipsWrap = document.getElementById("diffChips");
+  const countEl = document.getElementById("diffCount");
 
-function renderDifferentials() {
-  const wrap = $("diffChips");
-  wrap.innerHTML = "";
+  if (!diffSelect || !addBtn || !clearBtn || !chipsWrap || !countEl) return;
 
-  selectedDifferentials.forEach((name) => {
-    const chip = document.createElement("div");
-    chip.className = "chip";
-    chip.innerHTML = `
-      <span>${name}</span>
-      <button type="button" aria-label="Remove ${name}">×</button>
-    `;
+  // Make it global so your Save/Load/Reset can still use it
+  window.selectedDifferentials = window.selectedDifferentials || [];
 
-    chip.querySelector("button").addEventListener("click", () => {
-      selectedDifferentials = selectedDifferentials.filter((d) => d !== name);
-      renderDifferentials();
+  function renderDifferentials() {
+    chipsWrap.innerHTML = "";
+
+    window.selectedDifferentials.forEach((name) => {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+
+      const label = document.createElement("span");
+      label.textContent = name;
+
+      const x = document.createElement("button");
+      x.type = "button";
+      x.setAttribute("aria-label", `Remove ${name}`);
+      x.textContent = "×";
+      x.addEventListener("click", () => {
+        window.selectedDifferentials = window.selectedDifferentials.filter((d) => d !== name);
+        renderDifferentials();
+      });
+
+      chip.appendChild(label);
+      chip.appendChild(x);
+      chipsWrap.appendChild(chip);
     });
 
-    wrap.appendChild(chip);
+    countEl.textContent = `Selected: ${window.selectedDifferentials.length} / 4`;
+    addBtn.disabled = window.selectedDifferentials.length >= 4;
+  }
+
+  addBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    const choice = diffSelect.value;
+    if (!choice) return;
+
+    if (window.selectedDifferentials.includes(choice)) {
+      alert("That differential is already selected.");
+      return;
+    }
+
+    if (window.selectedDifferentials.length >= 4) {
+      alert("You can select up to 4 differentials.");
+      return;
+    }
+
+    window.selectedDifferentials.push(choice);
+    diffSelect.value = "";
+    renderDifferentials();
   });
 
-  $("diffCount").textContent = `Selected: ${selectedDifferentials.length} / 4`;
+  clearBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.selectedDifferentials = [];
+    renderDifferentials();
+  });
 
-  // lock add button when at max
-  $("addDiffBtn").disabled = selectedDifferentials.length >= 4;
-}
-
-$("addDiffBtn").addEventListener("click", () => {
-  const choice = $("diffSelect").value;
-  if (!choice) return;
-
-  if (selectedDifferentials.includes(choice)) {
-    alert("That differential is already selected.");
-    return;
-  }
-
-  if (selectedDifferentials.length >= 4) {
-    alert("You can select up to 4 differentials.");
-    return;
-  }
-
-  selectedDifferentials.push(choice);
-  $("diffSelect").value = "";
   renderDifferentials();
 });
 
-$("clearDiffBtn").addEventListener("click", () => {
-  selectedDifferentials = [];
-  renderDifferentials();
-});
-
-renderDifferentials(); // init
 
 
     // ===== STEP 5 — ASSESSMENTS (multi-select) =====
