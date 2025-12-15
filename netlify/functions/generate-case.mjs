@@ -64,6 +64,38 @@ function ageSpec(age) {
       "Use adult responsibilities and realistic impairment in work/social/relationship domains.",
   };
 }
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const TARGET_DISORDERS = [
+  "Delirium",
+  "Major Neurocognitive Disorder",
+  "Mild Neurocognitive Disorder",
+  "Attention-Deficit/Hyperactivity Disorder",
+  "Autism Spectrum Disorder",
+  "Schizophrenia",
+  "Bipolar I Disorder",
+  "Bipolar II Disorder",
+  "Persistent Depressive Disorder",
+  "Major Depressive Disorder",
+  "Generalised Anxiety Disorder",
+  "Panic Disorder",
+  "Separation Anxiety Disorder",
+  "Social Anxiety Disorder",
+  "Obsessive-Compulsive Disorder",
+  "Adjustment Disorder",
+  "Post-Traumatic Stress Disorder",
+  "Somatic Symptom Disorder",
+  "Anorexia Nervosa",
+  "Bulimia Nervosa",
+  "Binge-Eating Disorder",
+  "Conduct Disorder",
+  "Oppositional Defiant Disorder",
+  "Substance Use Disorder",
+  "Antisocial Personality Disorder",
+  "Borderline Personality Disorder"
+];
 
 export async function handler(event) {
   try {
