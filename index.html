@@ -105,18 +105,18 @@
     <div class="card">
       <div class="row cols2">
         <div>
-          <label for="disorder">DSM-5 disorder</label>
-          <select id="disorder">
-            <option value="" selected>— Choose —</option>
-            <option>Generalised Anxiety Disorder</option>
-            <option>Social Anxiety Disorder</option>
-            <option>Major Depressive Disorder</option>
-            <option>Panic Disorder</option>
-            <option>Obsessive-Compulsive Disorder</option>
-            <option>Posttraumatic Stress Disorder</option>
-            <option>Specific Phobia</option>
-            <option>ADHD</option>
-          </select>
+<label for="clientAge">Client age group</label>
+<select id="clientAge">
+  <option value="">— Choose —</option>
+  <option value="Child">Child</option>
+  <option value="Adolescent">Adolescent</option>
+  <option value="Adult">Adult</option>
+  <option value="Older adult">Older adult</option>
+</select>
+<p class="small">
+  Used to shape the case context (e.g., school, family, work, health).
+  Diagnosis remains hidden for Step 3.
+</p>
           <p class="small">Calls <code>/.netlify/functions/generate-case</code> via POST.</p>
         </div>
 
