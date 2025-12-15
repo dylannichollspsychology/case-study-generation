@@ -562,11 +562,24 @@
         $("caseText").value = `${title}\n\n${vignette}`.trim();
 
         // Optional: clear steps each time you generate a new case
-        ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
-        selectedModality = "";
-        selectedStrategies = [];
-        renderModalityButtons();
-        renderStrategyButtons();
+        $("step1").value = "";
+$("step2").value = "";
+$("dxSelect").value = "";
+updateDxChosen();
+
+selectedDifferentials = [];
+$("diffSelect").value = "";
+$("diffRationale").value = "";
+renderDifferentials();
+
+selectedAssessments = [];
+renderAssessmentButtons();
+
+selectedModality = "";
+selectedStrategies = [];
+renderModalityButtons();
+renderStrategyButtons();
+
 
         setStatus("Case generated.", "ok");
       } catch (e) {
@@ -595,19 +608,19 @@ renderDifferentials();
     });
 
     $("saveBtn").addEventListener("click", () => {
-      const state = {
-        clientAge: $("clientAge").value,
-        caseText: $("caseText").value,
-        step1: $("step1").value,
-        step2: $("step2").value,
-        step3: $("step3").value,
-        step4: $("step4").value,
-        selectedDifferentials,
-diffRationale: $("diffRationale").value
-        selectedAssessments,
-        selectedModality,
-        selectedStrategies
-        selectedDiagnosis
+const state = {
+  clientAge: $("clientAge").value,
+  caseText: $("caseText").value,
+  step1: $("step1").value,
+  step2: $("step2").value,
+
+  selectedDiagnosis,
+  selectedDifferentials,
+  diffRationale: $("diffRationale").value,
+
+  selectedAssessments,
+  selectedModality,
+  selectedStrategies
       };
       localStorage.setItem(LS_KEY, JSON.stringify(state));
       setStatus("Saved locally (this browser).", "ok");
@@ -816,8 +829,6 @@ const assessmentGroups = [
   }
 ];
 
-let selectedAssessments = [];
-
 function renderAssessmentButtons() {
   const grids = document.querySelectorAll(".assessmentGrid");
   grids.forEach((grid, i) => {
@@ -847,7 +858,6 @@ function renderAssessmentButtons() {
 
 
 // Init
-renderDiagnosisButtons();
 renderModalityButtons();
 renderStrategyButtons();
     selectedAssessments = [];
