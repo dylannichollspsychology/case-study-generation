@@ -132,6 +132,56 @@
 </div>
 
 <script>
+  $("generateBtn").onclick = async () => {
+    $("status").textContent = "Generating case…";
+
+    try {
+      const r = await fetch("/.netlify/functions/generate-case", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}) // no disorder passed
+      });
+
+      const raw = await r.text(); // read as text first so we can show errors
+
+      if (!r.ok) {
+        $("status").textContent = `Function error (${r.status}). See alert.`;
+        alert(raw);
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        $("status").textContent = "Function returned non-JSON. See alert.";
+        alert(raw);
+        return;
+      }
+
+      const title = data?.case?.title || "Generated Case";
+      const vignette = data?.case?.vignette || "";
+
+      if (!vignette) {
+        $("status").textContent = "No vignette returned. See alert.";
+        alert(raw);
+        return;
+      }
+
+      $("caseText").value = `${title}\n\n${vignette}`.trim();
+
+      ["step1","step2","step3","step4","step5"].forEach(id => $(id).value = "");
+      selectedModality = "";
+      selectedStrategies = [];
+      renderModalities();
+      renderStrategies();
+
+      $("status").textContent = "Case generated.";
+    } catch (e) {
+      $("status").textContent = "Network/JS error. See alert.";
+      alert(e?.message || String(e));
+    }
+  };
   const $ = id => document.getElementById(id);
 
   const modalities = [
