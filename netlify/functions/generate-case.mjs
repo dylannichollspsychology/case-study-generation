@@ -128,6 +128,8 @@ export async function handler(event) {
       (body.clientAge || body.ageGroup || "Adult").toString().slice(0, 60);
 
     const spec = ageSpec(clientAge);
+    const targetDisorder = pick(TARGET_DISORDERS);
+
 
     // IMPORTANT: No disorder passed in. Step 3 must remain a real test.
     // So we ask the model to pick ONE plausible presentation appropriate for that age group,
@@ -142,10 +144,11 @@ export async function handler(event) {
 
     const prompt = `
 Create ONE fictional case vignette for NPE-style practice.
-
 Client age group: ${spec.label} (typical range ${spec.ageRange}).
 Context guidance: ${spec.settingHints}
 Constraints: ${spec.include}
+Hidden target presentation: ${targetDisorder}
+Do NOT include the diagnosis name or DSM label in the vignette or title.
 
 Requirements:
 - Vignette length: 200–320 words.
