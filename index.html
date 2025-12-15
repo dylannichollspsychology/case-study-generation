@@ -505,7 +505,113 @@ ${selectedStrategies.length ? selectedStrategies.map(s => "- " + s).join("\n") :
       await navigator.clipboard.writeText(out);
       setStatus("Export copied to clipboard.", "ok");
     });
-    
+    // ===== STEP 3 — DIAGNOSIS SELECTION =====
+
+const diagnosisGroups = [
+  {
+    name: "Neurodevelopmental",
+    items: [
+      "Attention-Deficit/Hyperactivity Disorder",
+      "Autism Spectrum Disorder"
+    ]
+  },
+  {
+    name: "Psychotic",
+    items: ["Schizophrenia"]
+  },
+  {
+    name: "Bipolar & Depressive",
+    items: [
+      "Bipolar I Disorder",
+      "Bipolar II Disorder",
+      "Major Depressive Disorder",
+      "Persistent Depressive Disorder"
+    ]
+  },
+  {
+    name: "Anxiety & Related",
+    items: [
+      "Generalised Anxiety Disorder",
+      "Panic Disorder",
+      "Social Anxiety Disorder",
+      "Separation Anxiety Disorder",
+      "Obsessive-Compulsive Disorder"
+    ]
+  },
+  {
+    name: "Trauma & Stressor-Related",
+    items: [
+      "Post-Traumatic Stress Disorder",
+      "Adjustment Disorder"
+    ]
+  },
+  {
+    name: "Eating",
+    items: [
+      "Anorexia Nervosa",
+      "Bulimia Nervosa",
+      "Binge-Eating Disorder"
+    ]
+  },
+  {
+    name: "Disruptive",
+    items: [
+      "Oppositional Defiant Disorder",
+      "Conduct Disorder"
+    ]
+  },
+  {
+    name: "Substance",
+    items: ["Substance Use Disorder"]
+  },
+  {
+    name: "Personality",
+    items: [
+      "Borderline Personality Disorder",
+      "Antisocial Personality Disorder"
+    ]
+  },
+  {
+    name: "Neurocognitive",
+    items: [
+      "Delirium",
+      "Mild Neurocognitive Disorder",
+      "Major Neurocognitive Disorder"
+    ]
+  }
+];
+
+let selectedDiagnosis = "";
+
+function renderDiagnosisButtons() {
+  const grids = document.querySelectorAll(".diagnosisGrid");
+
+  grids.forEach((grid, i) => {
+    grid.innerHTML = "";
+
+    diagnosisGroups[i].items.forEach(name => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toggle";
+      btn.textContent = name;
+      btn.setAttribute(
+        "aria-pressed",
+        selectedDiagnosis === name ? "true" : "false"
+      );
+
+      btn.addEventListener("click", () => {
+        selectedDiagnosis = (selectedDiagnosis === name) ? "" : name;
+        renderDiagnosisButtons();
+      });
+
+      grid.appendChild(btn);
+    });
+  });
+
+  $("diagnosisChosen").textContent =
+    "Chosen: " + (selectedDiagnosis || "—");
+}
+
     // Init
     renderModalityButtons();
     renderStrategyButtons();
