@@ -148,8 +148,6 @@
           <p class="small">After generating, summarise the vignette in Step 1 (1–2 sentences, timeframe + impairment).</p>
         </div>
       </div>
-<div class="btnrow">
-</div>
     </div>
 
     <!-- STEP 1 -->
@@ -497,6 +495,7 @@
 
     // Step 7 (multi selection, max 4)
     let selectedStrategies = [];
+    let selectedAssessments = [];
 
     function renderStrategyButtons() {
       const grid = $("strategyGrid");
@@ -530,7 +529,16 @@
 
       $("strategyCount").textContent = `Selected: ${selectedStrategies.length} / 4`;
     }
+// ===== STEP 3 — DIAGNOSIS (dropdown, single-select) =====
+let selectedDiagnosis = "";
 
+function updateDxChosen() {
+  selectedDiagnosis = $("dxSelect")?.value || "";
+  $("dxChosen").textContent = "Chosen: " + (selectedDiagnosis || "—");
+}
+
+$("dxSelect").addEventListener("change", updateDxChosen);
+updateDxChosen(); // initialise
     // AI generation
     $("generateBtn").addEventListener("click", async () => {
       const clientAge = $("clientAge").value;
@@ -600,56 +608,7 @@ renderStrategyButtons();
       }
     });
 
-    // Export
 
-
-    $("exportBtn").addEventListener("click", async () => {
-      const out =
-`Client Age Group: ${$("clientAge").value || "(not set)"}
-
-CASE VIGNETTE
-${$("caseText").value || "(empty)"}
-
-STEP 1 — PRESENTING ISSUE
-${$("step1").value}
-
-STEP 2 — MAINTAINING FACTORS
-${$("step2").value}
-
-STEP 3 — PROVISIONAL DIAGNOSIS
-${selectedDiagnosis || "(none selected)"}
-
-STEP 4 — DIFFERENTIAL DIAGNOSES (up to 4)
-${selectedDifferentials.length ? selectedDifferentials.map(d => "- " + d).join("\n") : "(none selected)"}
-
-Rule-out rationale (optional):
-${$("diffRationale").value || "(blank)"}
-
-STEP 5 — ASSESSMENTS
-${selectedAssessments.length ? selectedAssessments.map(a => "- " + a).join("\n") : "(none selected)"}
-
-
-STEP 6 — PRIMARY MODALITY
-${selectedModality || "(none selected)"}
-
-STEP 7 — STRATEGIES (1–4)
-${selectedStrategies.length ? selectedStrategies.map(s => "- " + s).join("\n") : "(none selected)"}
-`;
-      
-      await navigator.clipboard.writeText(out);
-      setStatus("Export copied to clipboard.", "ok");
-    });
-
-// ===== STEP 3 — DIAGNOSIS (dropdown, single-select) =====
-let selectedDiagnosis = "";
-
-function updateDxChosen() {
-  selectedDiagnosis = $("dxSelect")?.value || "";
-  $("dxChosen").textContent = "Chosen: " + (selectedDiagnosis || "—");
-}
-
-$("dxSelect").addEventListener("change", updateDxChosen);
-updateDxChosen(); // initialise
 
     // ===== STEP 4 — DIFFERENTIALS (dropdown + add chips, max 4) =====
 let selectedDifferentials = [];
