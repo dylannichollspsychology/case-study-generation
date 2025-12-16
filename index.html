@@ -409,13 +409,14 @@
     When you’re done, export your full case formulation.
   </p>
 
-  <button id="exportBtn" style="
+  <button id="submitBtn" style="
     padding:14px 22px;
     font-size:16px;
     border-radius:14px;
   ">
-    Export as text
+    Submit
   </button>
+  <p class="small" id="submitStatus" style="margin-top:10px;"></p>
 </div>
     <footer>
       Educational use only. Not clinical advice.
@@ -808,6 +809,36 @@ renderStrategyButtons();
     selectedAssessments = [];
 renderAssessmentButtons();
 
+    const SUBMIT_KEY = "npe_case_submit_v1";
+
+function buildSubmission() {
+  return {
+    createdAt: new Date().toISOString(),
+    clientAge: $("clientAge").value || "",
+    caseText: $("caseText").value || "",
+    step1: $("step1").value || "",
+    step2: $("step2").value || "",
+    selectedDiagnosis: selectedDiagnosis || "",
+    selectedDifferentials: selectedDifferentials || [],
+    diffRationale: $("diffRationale").value || "",
+    selectedAssessments: selectedAssessments || [],
+    selectedModality: selectedModality || "",
+    selectedStrategies: selectedStrategies || []
+  };
+}
+
+$("submitBtn").addEventListener("click", () => {
+  const sub = buildSubmission();
+
+  if (!sub.clientAge || !sub.caseText.trim()) {
+    $("submitStatus").textContent = "Generate a case first, then submit.";
+    $("submitStatus").className = "small warn";
+    return;
+  }
+
+  localStorage.setItem(SUBMIT_KEY, JSON.stringify(sub));
+  window.location.href = "results.html";
+});
   </script>
 </body>
 </html>
