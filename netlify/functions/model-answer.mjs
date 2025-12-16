@@ -179,7 +179,7 @@ RULES:
 - Step 1: 1–2 sentences; timeframe + impairment; NO DSM labels.
 - Step 2: maintaining mechanisms; NO DSM labels.
 - Step 3: choose EXACTLY ONE diagnosis string from ALLOWED DIAGNOSES.
-- Step 4: choose 2–4 differential diagnosis strings from ALLOWED DIAGNOSES.
+- Step 4: choose EXACTLY 2 differential diagnosis strings from ALLOWED DIAGNOSES.
 - Step 5: choose 3–6 items from ALLOWED ASSESSMENTS.
 - Step 6: choose EXACTLY ONE item from ALLOWED MODALITIES.
 - Step 7: choose 2–4 items from ALLOWED STRATEGIES.
@@ -245,7 +245,7 @@ Return ONLY JSON with exactly these keys:
 
     // ENFORCE allowed lists
     out.model.step3 = inList(out.model.step3, ALLOWED_DX) ? out.model.step3 : "";
-    out.model.step4 = filterToAllowed(out.model.step4, ALLOWED_DX, 4);
+    out.model.step4 = filterToAllowed(out.model.step4, ALLOWED_DX, 2);
     out.model.step5 = filterToAllowed(out.model.step5, ALLOWED_ASSESSMENTS, 6);
     out.model.step6 = inList(out.model.step6, ALLOWED_MODALITIES) ? out.model.step6 : "";
     out.model.step7 = filterToAllowed(out.model.step7, ALLOWED_STRATEGIES, 4);
