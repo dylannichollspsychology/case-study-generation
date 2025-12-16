@@ -106,9 +106,23 @@ const ALLOWED_ASSESSMENTS = [
   "SDQ (Strengths and Difficulties Questionnaire)",
 ];
 
-
 function safeJsonParse(text) {
   try { return JSON.parse(text); } catch { return null; }
+}
+
+function inList(x, list) {
+  return list.includes(x);
+}
+
+function filterToAllowed(arr, list, maxN) {
+  if (!Array.isArray(arr)) return [];
+  const out = [];
+  for (const v of arr) {
+    const s = String(v || "").trim();
+    if (inList(s, list) && !out.includes(s)) out.push(s);
+    if (out.length >= maxN) break;
+  }
+  return out;
 }
 
 export async function handler(event) {
@@ -127,10 +141,7 @@ export async function handler(event) {
     let body = {};
     try { body = JSON.parse(event.body || "{}"); } catch { body = {}; }
 
-    const clientAge = (body.clientAge || "").toString().slice(0, 60);
     const vignette = (body.vignette || "").toString();
-    const userChosenDx = (body.userChosenDx || "").toString().slice(0, 120);
-
     if (!vignette.trim()) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: "Missing vignette." }) };
     }
@@ -189,68 +200,16 @@ Return ONLY JSON with exactly these keys:
 }
 `.trim();
 
-    const out = {
-  model: {
-    step1: typeof m.step1 === "string" ? m.step1.trim() : "",
-    step2: typeof m.step2 === "string" ? m.step2.trim() : "",
-    step3: typeof m.step3 === "string" ? m.step3.trim() : "",
-    step4: Array.isArray(m.step4) ? m.step4.slice(0, 4).map(x => String(x).trim()).filter(Boolean) : [],
-    step4_rationale: typeof m.step4_rationale === "string" ? m.step4_rationale.trim() : "",
-    step5: Array.isArray(m.step5) ? m.step5.slice(0, 6).map(x => String(x).trim()).filter(Boolean) : [],
-    step6: typeof m.step6 === "string" ? m.step6.trim() : "",
-    step7: Array.isArray(m.step7) ? m.step7.slice(0, 4).map(x => String(x).trim()).filter(Boolean) : [],
-  }
-};
-// ----- ENFORCE: only allow options that exist in the tool -----
-function inList(x, list) { return list.includes(x); }
-
-function filterToAllowed(arr, list, maxN) {
-  if (!Array.isArray(arr)) return [];
-  const out = [];
-  for (const v of arr) {
-    const s = String(v || "").trim();
-    if (inList(s, list) && !out.includes(s)) out.push(s);
-    if (out.length >= maxN) break;
-  }
-  return out;
-}
-
-out.model.step3 = inList(out.model.step3, ALLOWED_DX) ? out.model.step3 : "";
-out.model.step4 = filterToAllowed(out.model.step4, ALLOWED_DX, 4);
-out.model.step5 = filterToAllowed(out.model.step5, ALLOWED_ASSESSMENTS, 6);
-out.model.step6 = inList(out.model.step6, ALLOWED_MODALITIES) ? out.model.step6 : "";
-out.model.step7 = filterToAllowed(out.model.step7, ALLOWED_STRATEGIES, 4);
-
-    if (!out.model.step1 || !out.model.step2 || !out.model.step3) {
-  ...
-}
-
-
-    function inList(x, list) {
-  return list.includes(x);
-}
-
-function filterToAllowed(arr, list, maxN) {
-  if (!Array.isArray(arr)) return [];
-  const out = [];
-  for (const v of arr) {
-    const s = String(v || "").trim();
-    if (inList(s, list) && !out.includes(s)) out.push(s);
-    if (out.length >= maxN) break;
-  }
-  return out;
-}
-
-
     const resp = await client.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
       instructions,
       input: prompt,
-      temperature: 0.4,
+      temperature: 0.3,
     });
 
     const raw = (resp.output_text || "").trim();
 
+    // Parse JSON (with minimal salvage)
     let data = safeJsonParse(raw);
     if (!data) {
       const start = raw.indexOf("{");
@@ -270,7 +229,7 @@ function filterToAllowed(arr, list, maxN) {
 
     const m = data.model;
 
-    // enforce minimal schema + caps
+    // Build output (trim + cap)
     const out = {
       model: {
         step1: typeof m.step1 === "string" ? m.step1.trim() : "",
@@ -284,11 +243,22 @@ function filterToAllowed(arr, list, maxN) {
       },
     };
 
-    if (!out.model.step1 || !out.model.step2 || !out.model.step3) {
+    // ENFORCE allowed lists
+    out.model.step3 = inList(out.model.step3, ALLOWED_DX) ? out.model.step3 : "";
+    out.model.step4 = filterToAllowed(out.model.step4, ALLOWED_DX, 4);
+    out.model.step5 = filterToAllowed(out.model.step5, ALLOWED_ASSESSMENTS, 6);
+    out.model.step6 = inList(out.model.step6, ALLOWED_MODALITIES) ? out.model.step6 : "";
+    out.model.step7 = filterToAllowed(out.model.step7, ALLOWED_STRATEGIES, 4);
+
+    // Required fields (after enforcement)
+    if (!out.model.step1 || !out.model.step2 || !out.model.step3 || !out.model.step6 || out.model.step7.length < 2) {
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({ error: "Model response missing required fields (step1/step2/step3).", raw }),
+        body: JSON.stringify({
+          error: "Model response did not comply with allowed option lists. Try again.",
+          raw,
+        }),
       };
     }
 
