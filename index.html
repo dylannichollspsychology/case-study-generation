@@ -356,12 +356,6 @@
   <p class="small"><strong>Memory</strong></p>
   <div class="toggleGrid assessmentGrid"></div>
 
-  <p class="small"><strong>Vocational Scales</strong></p>
-  <div class="toggleGrid assessmentGrid"></div>
-
-  <p class="small"><strong>Personality</strong></p>
-  <div class="toggleGrid assessmentGrid"></div>
-
   <p class="small"><strong>Functioning and Quality of Life</strong></p>
   <div class="toggleGrid assessmentGrid"></div>
 
@@ -691,20 +685,6 @@ const assessmentGroups = [
     ]
   },
   {
-    name: "Vocational Scales",
-    items: [
-      "SDS (Self Directed Search)",
-      "Strong (Strong Interest Inventory)"
-    ]
-  },
-  {
-    name: "Personality",
-    items: [
-      "16PF (Sixteen Personality Factor Questionnaire)",
-      "NEO (NEO Personality Inventory)"
-    ]
-  },
-  {
     name: "Functioning and Quality of Life",
     items: [
       "WHO-DAS (World Health Organisation Disability Assessment Scale)",
@@ -734,6 +714,7 @@ const assessmentGroups = [
     ]
   }
 ];
+
 
 function renderAssessmentButtons() {
   const grids = document.querySelectorAll(".assessmentGrid");
