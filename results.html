@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Submission Results (NPE)</title>
+  <style>
+    :root { color-scheme: light; }
+    body{
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background:#f6f6f6; color:#111; margin:0; padding:24px 14px;
+    }
+    .wrap{ max-width: 980px; margin:0 auto; }
+    .card{
+      background:#fff; border:1px solid rgba(0,0,0,.06);
+      border-radius:14px; padding:16px; box-shadow:0 1px 10px rgba(0,0,0,.05);
+      margin-top:12px;
+    }
+    h1{ margin:0 0 6px; font-size: 26px; letter-spacing:-0.02em; }
+    .sub{ margin:0; color:#444; line-height:1.45; }
+    .row{ display:grid; grid-template-columns: 1fr; gap:12px; }
+    @media (min-width: 920px){ .row.cols2{ grid-template-columns: 1fr 1fr; } }
+    label{ display:block; font-size:13px; color:#333; margin-bottom:6px; font-weight:650; }
+    textarea{
+      width:100%; box-sizing:border-box;
+      padding:11px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.18);
+      font-size:14px; outline:none; background:#fff;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      min-height: 140px; resize: vertical; line-height:1.45;
+    }
+    .small{ font-size:12px; color:#666; margin-top:8px; line-height:1.4; }
+    .pill{
+      font-size:12px; color:#444; background: rgba(0,0,0,.05);
+      padding:6px 10px; border-radius: 999px;
+      display:inline-block;
+    }
+    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    button{
+      padding:11px 13px; border-radius:10px; border:1px solid #000;
+      background:#000; color:#fff; cursor:pointer; font-size:15px;
+    }
+    button.secondary{ background:#fff; color:#000; border-color: rgba(0,0,0,.25); }
+    .ok{ color:#0a7a2f; }
+    .warn{ color:#b00020; }
+    ul{ margin:8px 0 0 18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Results</h1>
+      <p class="sub">Your submission vs an AI model response (educational feedback only).</p>
+      <div class="btnrow">
+        <button class="secondary" id="backBtn">Back</button>
+        <button class="secondary" id="copyAllBtn">Copy full comparison</button>
+      </div>
+      <p class="small" id="status"></p>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+        <div>
+          <div class="pill" id="metaPill">Loading…</div>
+        </div>
+      </div>
+
+      <label>Case vignette</label>
+      <textarea id="caseText" readonly></textarea>
+    </div>
+
+    <!-- STEP COMPARISONS -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <strong>Step 1 — Presenting issue</strong>
+        <span class="pill" id="s1Pill">—</span>
+      </div>
+      <div class="row cols2" style="margin-top:10px;">
+        <div>
+          <label>You</label>
+          <textarea id="you1" readonly></textarea>
+        </div>
+        <div>
+          <label>Model</label>
+          <textarea id="mod1" readonly></textarea>
+        </div>
+      </div>
+      <div class="small" id="fb1"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <strong>Step 2 — Maintaining factors</strong>
+        <span class="pill" id="s2Pill">—</span>
+      </div>
+      <div class="row cols2" style="margin-top:10px;">
+        <div>
+          <label>You</label>
+          <textarea id="you2" readonly></textarea>
+        </div>
+        <div>
+          <label>Model</label>
+          <textarea id="mod2" readonly></textarea>
+        </div>
+      </div>
+      <div class="small" id="fb2"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <strong>Step 3 — Provisional diagnosis</strong>
+        <span class="pill" id="s3Pill">—</span>
+      </div>
+      <div class="row cols2" style="margin-top:10px;">
+        <div>
+          <label>You</label>
+          <textarea id="you3" readonly></textarea>
+        </div>
+        <div>
+          <label>Model</label>
+          <textarea id="mod3" readonly></textarea>
+        </div>
+      </div>
+      <div class="small" id="fb3"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <strong>Steps 4–7 — Plan</strong>
+        <span class="pill" id="sPlanPill">—</span>
+      </div>
+      <div class="row cols2" style="margin-top:10px;">
+        <div>
+          <label>You (Step 4–7)</label>
+          <textarea id="youPlan" readonly></textarea>
+        </div>
+        <div>
+          <label>Model (Step 4–7)</label>
+          <textarea id="modPlan" readonly></textarea>
+        </div>
+      </div>
+      <div class="small" id="fbPlan"></div>
+    </div>
+
+    <div class="card">
+      <p class="small">
+        Educational use only. Not clinical advice. Don’t paste real client info into this tool.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const SUBMIT_KEY = "npe_case_submit_v1";
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(msg, kind="") {
+      const el = $("status");
+      el.textContent = msg || "";
+      el.className = "small " + (kind || "");
+    }
+
+    function listToText(arr) {
+      return (Array.isArray(arr) && arr.length)
+        ? arr.map(x => "- " + x).join("\\n")
+        : "(none)";
+    }
+
+    function buildYouPlan(s) {
+      return `STEP 4 — DIFFERENTIALS\\n${listToText(s.selectedDifferentials)}\\n\\n` +
+             `Rule-out rationale:\\n${s.diffRationale || "(blank)"}\\n\\n` +
+             `STEP 5 — ASSESSMENTS\\n${listToText(s.selectedAssessments)}\\n\\n` +
+             `STEP 6 — MODALITY\\n${s.selectedModality || "(none)"}\\n\\n` +
+             `STEP 7 — STRATEGIES\\n${listToText(s.selectedStrategies)}`;
+    }
+
+    function tokenSet(text) {
+      return new Set(
+        (text || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9\\s-]/g, " ")
+          .split(/\\s+/)
+          .filter(Boolean)
+      );
+    }
+
+    function quickCompare(youText, modelText) {
+      const y = tokenSet(youText);
+      const m = tokenSet(modelText);
+
+      const missing = [];
+      const extra = [];
+
+      // keep it readable (not every token)
+      const ignore = new Set(["the","and","a","an","to","of","in","for","with","on","at","is","are","was","were","be","as","it","this","that","from"]);
+
+      m.forEach(t => { if (!ignore.has(t) && !y.has(t)) missing.push(t); });
+      y.forEach(t => { if (!ignore.has(t) && !m.has(t)) extra.push(t); });
+
+      // cap list sizes
+      return {
+        missing: missing.slice(0, 12),
+        extra: extra.slice(0, 12)
+      };
+    }
+
+    function setFeedback(pillId, fbId, youText, modelText) {
+      const { missing, extra } = quickCompare(youText, modelText);
+
+      // simple heuristic pill
+      const scoreHint = (missing.length <= 3) ? "Close" : (missing.length <= 7 ? "Some gaps" : "Many gaps");
+      $(pillId).textContent = scoreHint;
+
+      const parts = [];
+      if (missing.length) parts.push(`<strong>Possible missing ideas:</strong> ${missing.join(", ")}`);
+      if (extra.length) parts.push(`<strong>Your unique terms:</strong> ${extra.join(", ")}`);
+      $(fbId).innerHTML = parts.length ? parts.join("<br>") : "Looks closely aligned.";
+    }
+
+    async function main() {
+      const raw = localStorage.getItem(SUBMIT_KEY);
+      if (!raw) {
+        setStatus("No submission found. Go back and press Submit.", "warn");
+        return;
+      }
+
+      let s;
+      try { s = JSON.parse(raw); }
+      catch {
+        setStatus("Submission data was corrupted.", "warn");
+        return;
+      }
+
+      $("metaPill").textContent = `Age: ${s.clientAge || "—"} · Submitted: ${s.createdAt ? new Date(s.createdAt).toLocaleString() : "—"}`;
+      $("caseText").value = s.caseText || "";
+
+      // Fill YOU fields
+      $("you1").value = s.step1 || "";
+      $("you2").value = s.step2 || "";
+      $("you3").value = s.selectedDiagnosis || "";
+      $("youPlan").value = buildYouPlan(s);
+
+      setStatus("Generating model answer…");
+
+      try {
+        const res = await fetch("/.netlify/functions/model-answer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientAge: s.clientAge || "",
+            vignette: s.caseText || "",
+            // Let model decide independently, but you can pass their choice too
+            userChosenDx: s.selectedDiagnosis || ""
+          })
+        });
+
+        const text = await res.text();
+        if (!res.ok) {
+          setStatus(`Model answer failed (${res.status}).`, "warn");
+          console.log(text);
+          return;
+        }
+
+        let data;
+        try { data = JSON.parse(text); }
+        catch {
+          setStatus("Model answer returned non-JSON.", "warn");
+          console.log(text);
+          return;
+        }
+
+        // Expect these fields from the function
+        const model = data.model || {};
+
+        $("mod1").value = model.step1 || "";
+        $("mod2").value = model.step2 || "";
+        $("mod3").value = model.step3 || "";
+        $("modPlan").value =
+          `STEP 4 — DIFFERENTIALS\\n${listToText(model.step4 || [])}\\n\\n` +
+          `Rule-out rationale:\\n${model.step4_rationale || "(blank)"}\\n\\n` +
+          `STEP 5 — ASSESSMENTS\\n${listToText(model.step5 || [])}\\n\\n` +
+          `STEP 6 — MODALITY\\n${model.step6 || "(none)"}\\n\\n` +
+          `STEP 7 — STRATEGIES\\n${listToText(model.step7 || [])}`;
+
+        setFeedback("s1Pill", "fb1", $("you1").value, $("mod1").value);
+        setFeedback("s2Pill", "fb2", $("you2").value, $("mod2").value);
+        setFeedback("s3Pill", "fb3", $("you3").value, $("mod3").value);
+        setFeedback("sPlanPill", "fbPlan", $("youPlan").value, $("modPlan").value);
+
+        setStatus("Model answer generated.", "ok");
+      } catch (e) {
+        setStatus("Network error generating model answer.", "warn");
+        console.log(e);
+      }
+    }
+
+    $("backBtn").addEventListener("click", () => window.location.href = "index.html");
+
+    $("copyAllBtn").addEventListener("click", async () => {
+      const out =
+`CASE VIGNETTE
+${$("caseText").value}
+
+=== STEP 1 (YOU) ===
+${$("you1").value}
+
+=== STEP 1 (MODEL) ===
+${$("mod1").value}
+
+=== STEP 2 (YOU) ===
+${$("you2").value}
+
+=== STEP 2 (MODEL) ===
+${$("mod2").value}
+
+=== STEP 3 (YOU) ===
+${$("you3").value}
+
+=== STEP 3 (MODEL) ===
+${$("mod3").value}
+
+=== PLAN (YOU) ===
+${$("youPlan").value}
+
+=== PLAN (MODEL) ===
+${$("modPlan").value}
+`;
+      await navigator.clipboard.writeText(out);
+      setStatus("Copied full comparison.", "ok");
+    });
+
+    main();
+  </script>
+</body>
+</html>
