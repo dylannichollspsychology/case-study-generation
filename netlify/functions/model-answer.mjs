@@ -11,11 +11,7 @@ const headers = {
 };
 
 function safeJsonParse(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(text); } catch { return null; }
 }
 
 export async function handler(event) {
@@ -27,31 +23,19 @@ export async function handler(event) {
 
     // Require POST
     if (event.httpMethod !== "POST") {
-      return {
-        statusCode: 405,
-        headers,
-        body: JSON.stringify({ error: "Use POST" }),
-      };
+      return { statusCode: 405, headers, body: JSON.stringify({ error: "Use POST" }) };
     }
 
     // Read inputs
     let body = {};
-    try {
-      body = JSON.parse(event.body || "{}");
-    } catch {
-      body = {};
-    }
+    try { body = JSON.parse(event.body || "{}"); } catch { body = {}; }
 
     const clientAge = (body.clientAge || "").toString().slice(0, 60);
     const vignette = (body.vignette || "").toString();
-    const userChosenDx = (body.userChosenDx || body.chosenDx || "").toString().slice(0, 120);
+    const userChosenDx = (body.userChosenDx || "").toString().slice(0, 120);
 
     if (!vignette.trim()) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Missing vignette." }),
-      };
+      return { statusCode: 400, headers, body: JSON.stringify({ error: "Missing vignette." }) };
     }
 
     const instructions = [
@@ -60,24 +44,27 @@ export async function handler(event) {
       "Do NOT provide medical or legal advice.",
       "Return ONLY valid JSON. No markdown. No extra keys.",
       "Be concise, exam-like, and specific to the vignette.",
+      "IMPORTANT: Do NOT include DSM labels in Step 1 or Step 2. Labels are allowed in Step 3+.",
     ].join("\n");
 
     const prompt = `
-You will be given a fictional vignette. Produce a model answer for Steps 1–7.
+Create an NPE-style model answer for Steps 1–7 based on the vignette.
+
+Client age group: ${clientAge || "(not provided)"}
 
 VIGNETTE:
 ${vignette}
 
-Optional: User chose diagnosis (may be wrong): ${userChosenDx || "(not provided)"}
+User chose diagnosis (may be wrong): ${userChosenDx || "(not provided)"}
 
 OUTPUT RULES:
-- Step 1: 1–2 sentences. MUST include timeframe + impairment. No DSM labels here.
-- Step 2: Mechanisms/maintaining factors. No DSM labels here.
-- Step 3: Provide ONE best-fit DSM-5 diagnosis label.
-- Step 4: Provide 2–4 differentials (DSM labels). Provide 1 line rule-out rationale per differential.
-- Step 5: Provide 3–6 assessments (scales/interviews/tests) appropriate to the vignette. Brief rationale optional but keep concise.
-- Step 6: Choose ONE primary modality (e.g., CBT/IPT/Family/etc.) appropriate to the case.
-- Step 7: Choose 2–4 strategies linked to maintaining factors (names only is OK).
+- Step 1: 1–2 sentences. Must include timeframe + impairment. No DSM labels here.
+- Step 2: Maintaining factors (mechanisms). No DSM labels here.
+- Step 3: ONE best-fit DSM-5 diagnosis label.
+- Step 4: 2–4 differential DSM-5 diagnoses + 1 line rule-out rationale per item.
+- Step 5: 3–6 assessments (interviews/scales/tests) appropriate to the vignette.
+- Step 6: ONE primary modality (e.g., CBT, IPT, Family Therapy, etc.).
+- Step 7: 2–4 strategies linked to maintaining factors.
 
 Return ONLY JSON with exactly these keys:
 {
@@ -116,16 +103,13 @@ Return ONLY JSON with exactly these keys:
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({
-          error: "Model did not return valid JSON with required keys.",
-          raw,
-        }),
+        body: JSON.stringify({ error: "Model did not return valid JSON with required keys.", raw }),
       };
     }
 
     const m = data.model;
 
-    // Minimal schema enforcement
+    // enforce minimal schema + caps
     const out = {
       model: {
         step1: typeof m.step1 === "string" ? m.step1.trim() : "",
@@ -136,31 +120,19 @@ Return ONLY JSON with exactly these keys:
         step5: Array.isArray(m.step5) ? m.step5.slice(0, 6).map(x => String(x).trim()).filter(Boolean) : [],
         step6: typeof m.step6 === "string" ? m.step6.trim() : "",
         step7: Array.isArray(m.step7) ? m.step7.slice(0, 4).map(x => String(x).trim()).filter(Boolean) : [],
-      }
+      },
     };
 
-    // Ensure step1/2 exist at minimum
     if (!out.model.step1 || !out.model.step2 || !out.model.step3) {
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({
-          error: "Model response missing required fields (step1/step2/step3).",
-          raw,
-        }),
+        body: JSON.stringify({ error: "Model response missing required fields (step1/step2/step3).", raw }),
       };
     }
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(out),
-    };
+    return { statusCode: 200, headers, body: JSON.stringify(out) };
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: err?.message || "Server error" }),
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err?.message || "Server error" }) };
   }
 }
