@@ -180,7 +180,8 @@ RULES:
 - Step 2: maintaining mechanisms; NO DSM labels.
 - Step 3: choose EXACTLY ONE diagnosis string from ALLOWED DIAGNOSES.
 - Step 4: choose EXACTLY 2 differential diagnosis strings from ALLOWED DIAGNOSES.
-- Step 5: choose 3–6 items from ALLOWED ASSESSMENTS.
+- Step 5 is REQUIRED for ALL age groups (Child/Adolescent/Adult/Older adult).
+  Choose 3–6 items from ALLOWED ASSESSMENTS. Prefer age-appropriate tools (e.g., WISC/WPPSI + CBCL/SDQ for youth).
 - Step 6: choose EXACTLY ONE item from ALLOWED MODALITIES.
 - Step 7: choose 2–4 items from ALLOWED STRATEGIES.
 - Use the EXACT spelling/capitalisation from the allowed lists. No synonyms.
@@ -227,43 +228,39 @@ Return ONLY JSON with exactly these keys:
       };
     }
 
-    const m = data.model;
+// 1. Parse model output
+const m = data.model;
 
-    // Build output (trim + cap)
-    const out = {
-      model: {
-        step1: typeof m.step1 === "string" ? m.step1.trim() : "",
-        step2: typeof m.step2 === "string" ? m.step2.trim() : "",
-        step3: typeof m.step3 === "string" ? m.step3.trim() : "",
-        step4: Array.isArray(m.step4) ? m.step4.slice(0, 4).map(x => String(x).trim()).filter(Boolean) : [],
-        step4_rationale: typeof m.step4_rationale === "string" ? m.step4_rationale.trim() : "",
-        step5: Array.isArray(m.step5) ? m.step5.slice(0, 6).map(x => String(x).trim()).filter(Boolean) : [],
-        step6: typeof m.step6 === "string" ? m.step6.trim() : "",
-        step7: Array.isArray(m.step7) ? m.step7.slice(0, 4).map(x => String(x).trim()).filter(Boolean) : [],
-      },
-    };
-
-    // ENFORCE allowed lists
-    out.model.step3 = inList(out.model.step3, ALLOWED_DX) ? out.model.step3 : "";
-    out.model.step4 = filterToAllowed(out.model.step4, ALLOWED_DX, 2);
-    out.model.step5 = filterToAllowed(out.model.step5, ALLOWED_ASSESSMENTS, 6);
-    out.model.step6 = inList(out.model.step6, ALLOWED_MODALITIES) ? out.model.step6 : "";
-    out.model.step7 = filterToAllowed(out.model.step7, ALLOWED_STRATEGIES, 4);
-
-    // Required fields (after enforcement)
-    if (!out.model.step1 || !out.model.step2 || !out.model.step3 || !out.model.step6 || out.model.step7.length < 2) {
-      return {
-        statusCode: 502,
-        headers,
-        body: JSON.stringify({
-          error: "Model response did not comply with allowed option lists. Try again.",
-          raw,
-        }),
-      };
-    }
-
-    return { statusCode: 200, headers, body: JSON.stringify(out) };
-  } catch (err) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err?.message || "Server error" }) };
+// 2. Build + enforce
+const out = {
+  model: {
+    step1: cleanString(m.step1),
+    step2: cleanString(m.step2),
+    step3: cleanString(m.step3),
+    step4: filterToAllowed(m.step4, ALLOWED_DX, 2),
+    step4_rationale: cleanString(m.step4_rationale),
+    step5: filterToAllowed(m.step5, ALLOWED_ASSESSMENTS, 6),
+    step6: inList(m.step6, ALLOWED_MODALITIES) ? m.step6 : "",
+    step7: filterToAllowed(m.step7, ALLOWED_STRATEGIES, 4),
   }
+};
+
+// 2a. 🔧 REPAIR STEP 5 IF NEEDED (child/adolescent fix)
+if (out.model.step5.length < 3) {
+  // repair call here
 }
+
+// 3. ❌ FINAL REQUIRED-FIELDS CHECK (YOU ARE HERE)
+if (
+  !out.model.step1 ||
+  !out.model.step2 ||   // ✅ correct place
+  !out.model.step3 ||
+  !out.model.step6 ||
+  out.model.step7.length < 2
+) {
+  return 502;
+}
+
+// 4. ✅ Return clean model answer
+return 200;
+
