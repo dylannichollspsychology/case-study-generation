@@ -251,7 +251,7 @@
 <div class="card">
   <div class="stepHeader">
     <p class="stepTitle">Step 4 — Differential diagnoses</p>
-    <span class="pill">choose up to 4</span>
+   <span class="pill">choose up to 2</span>
   </div>
 
   <div class="row cols2">
@@ -327,7 +327,7 @@
 
       <div class="meta">
         <span class="badge" id="diffCount">Selected: 0 / 4</span>
-        <span class="small">Suggestion: choose 1–4 only.</span>
+        <span class="small">Suggestion: choose 1–2 only.</span>
       </div>
     </div>
 
@@ -633,10 +633,10 @@ function renderDifferentials() {
     wrap.appendChild(chip);
   });
 
-  $("diffCount").textContent = `Selected: ${selectedDifferentials.length} / 4`;
+  $("diffCount").textContent = `Selected: ${selectedDifferentials.length} / 2`;
 
   // lock add button when at max
-  $("addDiffBtn").disabled = selectedDifferentials.length >= 4;
+  $("addDiffBtn").disabled = selectedDifferentials.length >= 2;
 }
 
 $("addDiffBtn").addEventListener("click", () => {
@@ -648,8 +648,8 @@ $("addDiffBtn").addEventListener("click", () => {
     return;
   }
 
-  if (selectedDifferentials.length >= 4) {
-    alert("You can select up to 4 differentials.");
+  if (selectedDifferentials.length >= 2) {
+    alert("You can select up to 2 differentials.");
     return;
   }
 
