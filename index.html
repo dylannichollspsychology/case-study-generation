@@ -148,13 +148,9 @@
           <p class="small">After generating, summarise the vignette in Step 1 (1–2 sentences, timeframe + impairment).</p>
         </div>
       </div>
-
-      <div class="btnrow">
-        <button class="secondary" id="resetBtn">Reset all steps</button>
-        <button class="secondary" id="saveBtn">Save draft</button>
-        <button class="secondary" id="loadBtn">Load saved</button>
-        <button class="secondary" id="exportBtn">Export as text</button>
-      </div>
+<div class="btnrow">
+  <button class="secondary" id="exportBtn">Export as text</button>
+</div>
     </div>
 
     <!-- STEP 1 -->
@@ -590,72 +586,8 @@ renderStrategyButtons();
       }
     });
 
-    // Reset / Save / Load / Export
-    $("resetBtn").addEventListener("click", () => {
-      if (!confirm("Reset all steps and selections? (Generated vignette remains.)")) return;
-      ["step1","step2","step3","step4"].forEach(id => $(id).value = "");
-      selectedModality = "";
-      selectedStrategies = [];
-      $("dxSelect").value = "";
-updateDxChosen();
-      selectedDifferentials = [];
-$("diffSelect").value = "";
-$("diffRationale").value = "";
-renderDifferentials();
-      renderModalityButtons();
-      renderStrategyButtons();
-      setStatus("Reset complete.", "ok");
-    });
+    // Export
 
-    $("saveBtn").addEventListener("click", () => {
-const state = {
-  clientAge: $("clientAge").value,
-  caseText: $("caseText").value,
-  step1: $("step1").value,
-  step2: $("step2").value,
-
-  selectedDiagnosis,
-  selectedDifferentials,
-  diffRationale: $("diffRationale").value,
-
-  selectedAssessments,
-  selectedModality,
-  selectedStrategies
-      };
-      localStorage.setItem(LS_KEY, JSON.stringify(state));
-      setStatus("Saved locally (this browser).", "ok");
-    });
-
-    $("loadBtn").addEventListener("click", () => {
-      const raw = localStorage.getItem(LS_KEY);
-      if (!raw) { setStatus("No saved draft found.", "warn"); return; }
-      try {
-        const s = JSON.parse(raw);
-        $("clientAge").value = s.clientAge || "";
-        $("caseText").value = s.caseText || "";
-        $("step1").value = s.step1 || "";
-        $("step2").value = s.step2 || "";
-        $("step3").value = s.step3 || "";
-        $("step4").value = s.step4 || "";
-        $("step5").value = s.step5 || "";
-        $("dxSelect").value = s.selectedDiagnosis || "";
-updateDxChosen();
-        selectedDifferentials = Array.isArray(s.selectedDifferentials) ? s.selectedDifferentials.slice(0,4) : [];
-$("diffRationale").value = s.diffRationale || "";
-renderDifferentials();
-        selectedAssessments = Array.isArray(s.selectedAssessments) ? s.selectedAssessments : [];
-renderAssessmentButtons();
-        selectedModality = s.selectedModality || "";
-        selectedStrategies = Array.isArray(s.selectedStrategies) ? s.selectedStrategies.slice(0,4) : [];
-        renderModalityButtons();
-        renderStrategyButtons();
-        selectedAssessments = [];
-renderAssessmentButtons();
-        setStatus("Loaded saved draft.", "ok");
-      } catch {
-        setStatus("Could not load saved draft.", "warn");
-      }
-    });
 
     $("exportBtn").addEventListener("click", async () => {
       const out =
