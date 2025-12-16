@@ -33,15 +33,18 @@
     textarea.short{ min-height: 90px; }
 
     .small{ font-size:12px; color:#666; margin-top:8px; line-height:1.4; }
-    .pill{
-      font-size:12px; color:#444; background: rgba(0,0,0,.05);
-      padding:6px 10px; border-radius: 999px;
-      display:inline-block;
+    .warn{ color:#b00020; }
+    .ok{ color:#0a7a2f; }
+
+    .metaLine{
+      font-size:12px;
+      color:#444;
+      background: rgba(0,0,0,.05);
       border:1px solid rgba(0,0,0,.06);
-      white-space:nowrap;
+      padding:8px 10px;
+      border-radius:999px;
+      display:inline-block;
     }
-    .pill.good{ background: rgba(10,122,47,.10); color:#0a7a2f; border-color: rgba(10,122,47,.15); }
-    .pill.warn{ background: rgba(176,0,32,.08); color:#b00020; border-color: rgba(176,0,32,.14); }
 
     .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
     button{
@@ -57,7 +60,7 @@
 
     <div class="card">
       <h1>Results</h1>
-      <p class="sub">Your submission vs an AI model response (educational feedback only).</p>
+      <p class="sub">Your submission vs an AI model response (educational comparison only).</p>
       <div class="btnrow">
         <button class="secondary" id="backBtn">Back</button>
         <button class="secondary" id="copyAllBtn">Copy full comparison</button>
@@ -66,20 +69,15 @@
     </div>
 
     <div class="card">
-      <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
-        <div class="pill" id="metaPill">Loading…</div>
-      </div>
+      <div class="metaLine" id="metaLine">Loading…</div>
 
-      <label>Case vignette</label>
+      <label style="margin-top:12px;">Case vignette</label>
       <textarea id="caseText" readonly></textarea>
     </div>
 
     <!-- STEP 1 -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <strong>Step 1 — Presenting issue</strong>
-        <span class="pill" id="s1Pill">—</span>
-      </div>
+      <strong>Step 1 — Presenting issue</strong>
       <div class="row cols2" style="margin-top:10px;">
         <div>
           <label>You</label>
@@ -90,15 +88,11 @@
           <textarea id="mod1" readonly></textarea>
         </div>
       </div>
-      <div class="small" id="fb1"></div>
     </div>
 
     <!-- STEP 2 -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <strong>Step 2 — Maintaining factors</strong>
-        <span class="pill" id="s2Pill">—</span>
-      </div>
+      <strong>Step 2 — Maintaining factors</strong>
       <div class="row cols2" style="margin-top:10px;">
         <div>
           <label>You</label>
@@ -109,34 +103,26 @@
           <textarea id="mod2" readonly></textarea>
         </div>
       </div>
-      <div class="small" id="fb2"></div>
     </div>
 
     <!-- STEP 3 -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <strong>Step 3 — Provisional diagnosis</strong>
-        <span class="pill" id="s3Pill">—</span>
-      </div>
+      <strong>Step 3 — Provisional diagnosis</strong>
       <div class="row cols2" style="margin-top:10px;">
         <div>
           <label>You</label>
-          <textarea id="you3" readonly></textarea>
+          <textarea id="you3" class="short" readonly></textarea>
         </div>
         <div>
           <label>Model</label>
-          <textarea id="mod3" readonly></textarea>
+          <textarea id="mod3" class="short" readonly></textarea>
         </div>
       </div>
-      <div class="small" id="fb3"></div>
     </div>
 
     <!-- STEP 4 -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <strong>Step 4 — Differential diagnoses</strong>
-        <span class="pill" id="s4Pill">—</span>
-      </div>
+      <strong>Step 4 — Differential diagnoses</strong>
 
       <div class="row cols2" style="margin-top:10px;">
         <div>
@@ -155,16 +141,11 @@
           <textarea id="mod4r" readonly></textarea>
         </div>
       </div>
-
-      <div class="small" id="fb4"></div>
     </div>
 
     <!-- STEP 5 -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <strong>Step 5 — Assessments</strong>
-        <span class="pill" id="s5Pill">—</span>
-      </div>
+      <strong>Step 5 — Assessments</strong>
       <div class="row cols2" style="margin-top:10px;">
         <div>
           <label>You</label>
@@ -175,15 +156,11 @@
           <textarea id="mod5" readonly></textarea>
         </div>
       </div>
-      <div class="small" id="fb5"></div>
     </div>
 
     <!-- STEP 6 -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <strong>Step 6 — Primary modality</strong>
-        <span class="pill" id="s6Pill">—</span>
-      </div>
+      <strong>Step 6 — Primary modality</strong>
       <div class="row cols2" style="margin-top:10px;">
         <div>
           <label>You</label>
@@ -194,15 +171,11 @@
           <textarea id="mod6" class="short" readonly></textarea>
         </div>
       </div>
-      <div class="small" id="fb6"></div>
     </div>
 
     <!-- STEP 7 -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <strong>Step 7 — Intervention strategies</strong>
-        <span class="pill" id="s7Pill">—</span>
-      </div>
+      <strong>Step 7 — Intervention strategies</strong>
       <div class="row cols2" style="margin-top:10px;">
         <div>
           <label>You</label>
@@ -213,7 +186,6 @@
           <textarea id="mod7" readonly></textarea>
         </div>
       </div>
-      <div class="small" id="fb7"></div>
     </div>
 
     <div class="card">
@@ -221,6 +193,7 @@
         Educational use only. Not clinical advice. Don’t paste real client info into this tool.
       </p>
     </div>
+
   </div>
 
   <script>
@@ -233,107 +206,10 @@
       el.className = "small " + (kind || "");
     }
 
-    function setPill(elId, text, kind="") {
-      const el = $(elId);
-      el.textContent = text;
-      el.className = "pill" + (kind ? (" " + kind) : "");
-    }
-
     function listToText(arr) {
       return (Array.isArray(arr) && arr.length)
         ? arr.map(x => "- " + x).join("\n")
         : "(none)";
-    }
-
-    // Simple token compare to generate readable hints
-    function tokenSet(text) {
-      return new Set(
-        (text || "")
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, " ")
-          .split(/\s+/)
-          .filter(Boolean)
-      );
-    }
-
-    function quickCompare(youText, modelText) {
-      const y = tokenSet(youText);
-      const m = tokenSet(modelText);
-
-      const missing = [];
-      const extra = [];
-
-      const ignore = new Set([
-        "the","and","a","an","to","of","in","for","with","on","at","is","are",
-        "was","were","be","as","it","this","that","from","by","or","but"
-      ]);
-
-      m.forEach(t => { if (!ignore.has(t) && !y.has(t)) missing.push(t); });
-      y.forEach(t => { if (!ignore.has(t) && !m.has(t)) extra.push(t); });
-
-      return {
-        missing: missing.slice(0, 12),
-        extra: extra.slice(0, 12)
-      };
-    }
-
-    function setFeedbackGeneric(pillId, fbId, youText, modelText) {
-      const { missing, extra } = quickCompare(youText, modelText);
-
-      let label = "Many gaps", kind = "warn";
-      if (missing.length <= 3) { label = "Close"; kind = "good"; }
-      else if (missing.length <= 7) { label = "Some gaps"; kind = ""; }
-
-      setPill(pillId, label, kind);
-
-      const parts = [];
-      if (missing.length) parts.push(`<strong>Possible missing ideas:</strong> ${missing.join(", ")}`);
-      if (extra.length) parts.push(`<strong>Your unique terms:</strong> ${extra.join(", ")}`);
-      $(fbId).innerHTML = parts.length ? parts.join("<br>") : "Looks closely aligned.";
-    }
-
-    function normaliseDx(dx) {
-      return (dx || "").trim().toLowerCase().replace(/\s+/g, " ");
-    }
-
-    function setDxFeedback(youDx, modelDx) {
-      const y = normaliseDx(youDx);
-      const m = normaliseDx(modelDx);
-
-      if (!y) {
-        setPill("s3Pill", "No selection", "warn");
-        $("fb3").innerHTML = "You didn’t select a diagnosis. Try choosing one best-fit option and resubmit.";
-        return;
-      }
-
-      if (y === m) {
-        setPill("s3Pill", "Match", "good");
-        $("fb3").innerHTML = "Your provisional diagnosis matches the model answer.";
-      } else {
-        setPill("s3Pill", "Different", "warn");
-        $("fb3").innerHTML =
-          `Your diagnosis differs from the model answer.<br>` +
-          `<strong>Suggestion:</strong> Re-check timeframe, impairment, and whether the core features better align with the model’s label.`;
-      }
-    }
-
-    function setSingleChoiceFeedback(pillId, fbId, youVal, modelVal) {
-      const y = (youVal || "").trim();
-      const m = (modelVal || "").trim();
-
-      if (!y) {
-        setPill(pillId, "No selection", "warn");
-        $(fbId).innerHTML = "You didn’t select an option here.";
-        return;
-      }
-
-      if (normaliseDx(y) === normaliseDx(m)) {
-        setPill(pillId, "Match", "good");
-        $(fbId).innerHTML = "Your selection matches the model answer.";
-      } else {
-        setPill(pillId, "Different", "warn");
-        $(fbId).innerHTML = "Your selection differs from the model answer. Check whether your choice is best supported by the vignette and your Step 2 mechanisms.";
-      }
     }
 
     async function main() {
@@ -350,7 +226,7 @@
         return;
       }
 
-      $("metaPill").textContent =
+      $("metaLine").textContent =
         `Age: ${s.clientAge || "—"} · Submitted: ${s.createdAt ? new Date(s.createdAt).toLocaleString() : "—"}`;
 
       $("caseText").value = s.caseText || "";
@@ -408,19 +284,6 @@
         $("mod5").value = listToText(model.step5 || []);
         $("mod6").value = (model.step6 || "(none)").toString();
         $("mod7").value = listToText(model.step7 || []);
-
-        // FEEDBACK
-        setFeedbackGeneric("s1Pill", "fb1", $("you1").value, $("mod1").value);
-        setFeedbackGeneric("s2Pill", "fb2", $("you2").value, $("mod2").value);
-
-        // Step 3: match/different
-        setDxFeedback($("you3").value, $("mod3").value);
-
-        // Steps 4, 5, 7: compare list text; Step 6: exact match
-        setFeedbackGeneric("s4Pill", "fb4", $("you4").value + "\n" + $("you4r").value, $("mod4").value + "\n" + $("mod4r").value);
-        setFeedbackGeneric("s5Pill", "fb5", $("you5").value, $("mod5").value);
-        setSingleChoiceFeedback("s6Pill", "fb6", $("you6").value, $("mod6").value);
-        setFeedbackGeneric("s7Pill", "fb7", $("you7").value, $("mod7").value);
 
         setStatus("Model answer generated.", "ok");
       } catch (e) {
