@@ -237,7 +237,7 @@ function clearUIForNewCase() {
     function renderCaseAndOptions() {
   $("caseTitle").textContent = "Case: " + (current.title || "Untitled");
   $("caseText").textContent =
-    `${current.title ? current.title + "\n\n" : ""}${current.vignette}`.trim();  // was .value
+    `${current.vignette}`.trim();  // was .value
   //
 
       const wrap = $("options");
