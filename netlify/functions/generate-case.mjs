@@ -11,11 +11,7 @@ const headers = {
 };
 
 function safeJsonParse(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(text); } catch { return null; }
 }
 
 function ageSpec(age) {
@@ -37,7 +33,7 @@ function ageSpec(age) {
       label: "Adolescent",
       ageRange: "13–17",
       settingHints:
-        "High school context; peer relationships; family conflict; identity/independence; consider risk-screening themes only if relevant.",
+        "High school context; peer relationships; family conflict; identity/independence; include risk-screening themes only if relevant.",
       include:
         "Keep it developmentally appropriate; avoid adult workplace-only framing; show impairment in school/peer/family domains.",
     };
@@ -54,7 +50,6 @@ function ageSpec(age) {
     };
   }
 
-  // default adult
   return {
     label: "Adult",
     ageRange: "18–64",
@@ -64,8 +59,28 @@ function ageSpec(age) {
       "Use adult responsibilities and realistic impairment in work/social/relationship domains.",
   };
 }
+
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickNExcluding(arr, n, excludeSet) {
+  const pool = arr.filter(x => !excludeSet.has(x));
+  // Fisher–Yates shuffle (in place copy)
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, n);
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 const TARGET_DISORDERS = [
@@ -94,17 +109,15 @@ const TARGET_DISORDERS = [
   "Oppositional Defiant Disorder",
   "Substance Use Disorder",
   "Antisocial Personality Disorder",
-  "Borderline Personality Disorder"
+  "Borderline Personality Disorder",
 ];
 
 export async function handler(event) {
   try {
-    // CORS preflight
     if (event.httpMethod === "OPTIONS") {
       return { statusCode: 200, headers, body: "" };
     }
 
-    // Require POST
     if (event.httpMethod !== "POST") {
       return {
         statusCode: 405,
@@ -113,54 +126,51 @@ export async function handler(event) {
       };
     }
 
-    // Read inputs
     let body = {};
-    try {
-      body = JSON.parse(event.body || "{}");
-    } catch {
-      body = {};
-    }
+    try { body = JSON.parse(event.body || "{}"); } catch { body = {}; }
 
-    // Updated to match your index.html:
-    // - index.html sends { clientAge: "Child"|"Adolescent"|"Adult"|"Older adult" }
-    // - keep backwards compatibility with { ageGroup: ... }
     const clientAge =
       (body.clientAge || body.ageGroup || "Adult").toString().slice(0, 60);
 
     const spec = ageSpec(clientAge);
-    const targetDisorder = pick(TARGET_DISORDERS);
+    const correctDx = pick(TARGET_DISORDERS);
 
+    // Build 4 options (1 correct + 3 distractors)
+    const distractors = pickNExcluding(TARGET_DISORDERS, 3, new Set([correctDx]));
+    const options = shuffle([correctDx, ...distractors]);
 
-    // IMPORTANT: No disorder passed in. Step 3 must remain a real test.
-    // So we ask the model to pick ONE plausible presentation appropriate for that age group,
-    // and include subtle distractors.
     const instructions = [
-      "You generate fictional psychology exam-style case vignettes for study in Australia.",
+      "You generate fictional clinical psychology training vignettes for university-level study in Australia.",
       "Do NOT include real identifying details.",
       "Do NOT provide medical or legal advice.",
       "Return ONLY valid JSON. No markdown. No extra keys.",
-      "The goal is to test diagnostic reasoning, so do not reveal a diagnosis label in the vignette or title.",
+      "Do NOT reveal the diagnosis label in the vignette text.",
     ].join("\n");
 
     const prompt = `
-Create ONE fictional case vignette for NPE-style practice.
+Create ONE fictional case vignette for diagnostic discrimination practice.
 Client age group: ${spec.label} (typical range ${spec.ageRange}).
 Context guidance: ${spec.settingHints}
 Constraints: ${spec.include}
-Hidden target presentation: ${targetDisorder}
-Do NOT include the diagnosis name or DSM label in the vignette.
+
+Hidden target diagnosis (do NOT name it in vignette): ${correctDx}
 
 Requirements:
 - Vignette length: 200–320 words.
 - Neutral clinical style, readable.
 - Include timeframe + functional impairment.
-- Include 1–2 subtle distractor features that could tempt a different diagnosis.
+- Include 1–2 subtle distractor features that could tempt another diagnosis.
 - Do NOT name the diagnosis or DSM label in the vignette.
+
+Also write a short explanation (80–140 words) that:
+- Names the correct diagnosis explicitly (allowed here),
+- Gives 2–3 features supporting it,
+- Mentions 1 reason each of TWO plausible alternatives could be less likely.
 
 Return ONLY JSON with exactly these keys:
 {
   "vignette": "string",
-  "presenting_problem": "string (1 sentence stem-like presenting issue)"
+  "explanation": "string"
 }
 `.trim();
 
@@ -173,7 +183,6 @@ Return ONLY JSON with exactly these keys:
 
     const raw = (resp.output_text || "").trim();
 
-    // Try parse; if model returns stray text, attempt a minimal cleanup.
     let data = safeJsonParse(raw);
     if (!data) {
       const start = raw.indexOf("{");
@@ -187,21 +196,12 @@ Return ONLY JSON with exactly these keys:
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({
-          error: "Model did not return valid JSON.",
-          raw,
-        }),
+        body: JSON.stringify({ error: "Model did not return valid JSON.", raw }),
       };
     }
 
-    // Enforce the minimal schema
-    const vignette =
-      typeof data.vignette === "string" ? data.vignette.trim() : "";
-
-    const presenting_problem =
-      typeof data.presenting_problem === "string"
-        ? data.presenting_problem.trim()
-        : "";
+    const vignette = typeof data.vignette === "string" ? data.vignette.trim() : "";
+    const explanation = typeof data.explanation === "string" ? data.explanation.trim() : "";
 
     if (!vignette) {
       return {
@@ -214,13 +214,17 @@ Return ONLY JSON with exactly these keys:
       };
     }
 
+    const title = `Case: ${spec.label}`;
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
+        title,
         vignette,
-        presenting_problem,
-        clientAge: spec.label, // helpful for debugging; remove if you don’t want it
+        options,      // array of 4
+        correctDx,    // string
+        explanation,  // string
       }),
     };
   } catch (err) {
