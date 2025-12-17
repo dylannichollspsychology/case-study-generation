@@ -222,7 +222,7 @@
 
     function renderCaseAndOptions() {
       $("caseTitle").textContent = "Case: " + (current.title || "Untitled");
-      $("caseText").value = `${current.title ? current.title + "\\n\\n" : ""}${current.vignette}`.trim();
+      $("caseText").value = `${current.title ? current.title + "\n\n" : ""}${current.vignette}`.trim();
 
       const wrap = $("options");
       wrap.innerHTML = "";
