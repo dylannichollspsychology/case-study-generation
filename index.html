@@ -24,14 +24,14 @@
     @media (min-width: 920px){ .row.cols2{ grid-template-columns: 1fr 1fr; } }
 
     label{ display:block; font-size:13px; color:#333; margin-bottom:6px; font-weight:650; }
-    textarea, input, select{
+    textarea, select{
       width:100%; box-sizing:border-box;
       padding:11px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.18);
       font-size:15px; outline:none; background:#fff;
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
     textarea{ min-height: 180px; resize: vertical; line-height:1.45; }
-    textarea:focus, input:focus, select:focus{ border-color: rgba(0,0,0,.45); }
+    textarea:focus, select:focus{ border-color: rgba(0,0,0,.45); }
 
     button{
       padding:11px 13px; border-radius:10px; border:1px solid #000;
@@ -50,7 +50,6 @@
       display:inline-flex; align-items:center; gap:8px;
     }
 
-    /* Answer options (cards) */
     .options{
       display:grid;
       grid-template-columns: 1fr;
@@ -102,28 +101,27 @@
     .divider{ height:1px; background:rgba(0,0,0,.06); margin:12px 0; }
 
     footer{ margin-top:16px; color:#777; font-size:12px; line-height:1.4; }
+    code{ font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <h1>Diagnostic Discrimination Tool</h1>
-      <p class="sub">Generate a case vignette and select the most likely DSM-5-TR diagnosis from four options.</p>
+      <p class="sub">Generate a vignette and select the most likely DSM-5-TR diagnosis from four options.</p>
     </header>
 
     <!-- 1) GENERATE CASE -->
     <div class="card">
       <div class="row cols2">
         <div>
-          <label for="clientAge">Client age group (optional)</label>
+          <label for="clientAge">Client group</label>
           <select id="clientAge">
             <option value="">— Any —</option>
-            <option value="Child">Child</option>
-            <option value="Adolescent">Adolescent</option>
-            <option value="Adult">Adult</option>
-            <option value="Older adult">Older adult</option>
+            <option value="Child/Adolescent">Children/Adolescents</option>
+            <option value="Adult">Adults</option>
           </select>
-          <p class="small">Tip: keep “Any” if you want variety.</p>
+          <p class="small">Tip: “Any” gives variety; otherwise the generator adapts wording and criteria to the group.</p>
         </div>
 
         <div>
@@ -166,7 +164,7 @@
     </div>
 
     <footer>
-      If you want, I can also give you the matching <code>generate-case</code> Netlify function that returns the four options + correct answer.
+      If you want, I can also adjust your Netlify function so “Children/Adolescents” maps to the right developmental rules.
     </footer>
   </div>
 
@@ -214,25 +212,23 @@
     }
 
     function normalisePayload(data) {
-      // Allow a few common field names without breaking:
       const title = data.title || data.caseTitle || "";
       const vignette = data.vignette || data.case || data.caseText || "";
       const options = data.options || data.dxOptions || data.choices || [];
       const correctDx = data.correctDx || data.correct || data.answer || "";
       const explanation = data.explanation || data.rationale || data.feedback || "";
-
       return { title, vignette, options, correctDx, explanation };
     }
 
     function renderCaseAndOptions() {
       $("caseTitle").textContent = "Case: " + (current.title || "Untitled");
-      $("caseText").value = `${current.title ? current.title + "\n\n" : ""}${current.vignette}`.trim();
+      $("caseText").value = `${current.title ? current.title + "\\n\\n" : ""}${current.vignette}`.trim();
 
       const wrap = $("options");
       wrap.innerHTML = "";
 
       const opts = Array.isArray(current.options) ? current.options : [];
-      const four = shuffle(opts).slice(0, 4); // just in case generator gives >4
+      const four = shuffle(opts).slice(0, 4);
 
       if (four.length !== 4) {
         setStatus("Generator did not return 4 options. Check your function payload.", "warn");
@@ -301,14 +297,12 @@
       if (current.explanation) {
         $("explanation").value = current.explanation.trim();
       } else {
-        $("explanation").value = isCorrect
-          ? "Correct."
-          : `Correct answer: ${current.correctDx}`;
+        $("explanation").value = isCorrect ? "Correct." : `Correct answer: ${current.correctDx}`;
       }
     }
 
     async function generateCase() {
-      const clientAge = $("clientAge").value || "";
+      const clientGroup = $("clientAge").value || ""; // "", "Child/Adolescent", "Adult"
 
       $("generateBtn").disabled = true;
       setStatus("Generating case…");
@@ -318,7 +312,7 @@
         const res = await fetch("/.netlify/functions/generate-case", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clientAge })
+          body: JSON.stringify({ clientAge: clientGroup })
         });
 
         const raw = await res.text();
@@ -339,7 +333,6 @@
 
         const norm = normalisePayload(data);
 
-        // Basic validation
         if (!norm.vignette || !Array.isArray(norm.options) || norm.options.length < 4 || !norm.correctDx) {
           setStatus("Payload missing fields (need vignette, 4 options, correctDx).", "warn");
           console.log("Bad payload:", data);
@@ -366,7 +359,6 @@
     });
 
     $("resetBtn").addEventListener("click", () => {
-      // Only reset selection for the current case (keep vignette + options)
       answered = false;
       clearOptionClasses();
       enableAllOptions();
