@@ -207,14 +207,14 @@
       pill.className = "pill " + (kind || "");
     }
 
-    function clearUIForNewCase() {
-      $("caseText").value = "";
-      $("caseTitle").textContent = "Case: —";
-      $("options").innerHTML = "";
-      $("explanation").value = "";
-      answered = false;
-      setAnswerState("Answer: not attempted");
-    }
+function clearUIForNewCase() {
+  $("caseText").textContent = ""; 
+  $("caseTitle").textContent = "Case: —";
+  $("options").innerHTML = "";
+  $("explanation").value = "";
+  answered = false;
+  setAnswerState("Answer: not attempted");
+}
 
     function shuffle(arr) {
       const a = arr.slice();
@@ -235,8 +235,10 @@
     }
 
     function renderCaseAndOptions() {
-      $("caseTitle").textContent = "Case: " + (current.title || "Untitled");
-      $("caseText").value = `${current.title ? current.title + "\n\n" : ""}${current.vignette}`.trim();
+  $("caseTitle").textContent = "Case: " + (current.title || "Untitled");
+  $("caseText").textContent =
+    `${current.title ? current.title + "\n\n" : ""}${current.vignette}`.trim();  // was .value
+  //
 
       const wrap = $("options");
       wrap.innerHTML = "";
