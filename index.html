@@ -33,6 +33,20 @@
     textarea{ min-height: 180px; resize: vertical; line-height:1.45; }
     textarea:focus, select:focus{ border-color: rgba(0,0,0,.45); }
 
+    .caseBox{
+  background:#fff;
+  border:1px solid rgba(0,0,0,.18);
+  border-radius:12px;
+  padding:14px;
+  min-height: 180px;
+  line-height: 1.5;
+  white-space: pre-wrap;     /* respects \n line breaks */
+  word-break: break-word;
+}
+.caseBox:empty::before{
+  content:"Your generated vignette will appear here…";
+  color:#888;
+}
     button{
       padding:11px 13px; border-radius:10px; border:1px solid #000;
       background:#000; color:#fff; cursor:pointer; font-size:15px;
